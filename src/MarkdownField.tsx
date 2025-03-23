@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
-import { marked } from 'marked';
-import { bitable, FieldType } from '@lark-base-open/js-sdk';
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import { FieldType } from '@lark-base-open/js-sdk';
+import { preprocessMarkdown } from './utils/MarkdownRenderer';
+import 'katex/dist/katex.min.css';
 
 export class MarkdownFieldExtension {
   constructor() {
@@ -91,14 +97,74 @@ const MarkdownField: React.FC<MarkdownFieldProps> = ({ initialValue = '' }) => {
         />
       ) : (
         <div
-          dangerouslySetInnerHTML={{ __html: marked(content) }}
           style={{
             padding: '8px',
             border: '1px solid var(--color-border)',
             borderRadius: '4px',
             minHeight: '200px',
           }}
-        />
+        >
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm, remarkMath]}
+            rehypePlugins={[rehypeRaw, rehypeKatex]}
+            skipHtml={false}
+            unwrapDisallowed={false}
+            components={{
+              code: ({ inline, className, children, ...props }: any) => {
+                // 获取原始文本内容
+                let codeText = typeof children === 'string' ? children : String(children);
+                
+                // 检查行内代码
+                if (props.node?.position?.start?.line === props.node?.position?.end?.line) {
+                  // 确保 Markdown 语法在代码中不被解析
+                  // 使用 HTML 转义符号解决这个问题
+                  codeText = codeText
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;')
+                    .replace(/\[/g, '&#91;')
+                    .replace(/\]/g, '&#93;')
+                    .replace(/\(/g, '&#40;')
+                    .replace(/\)/g, '&#41;');
+                    
+                  return (
+                    <code 
+                      {...props} 
+                      className="markdown-inline-code" 
+                      style={{
+                        display: 'inline',
+                        boxSizing: 'border-box', 
+                        padding: '0.2em 0.4em',
+                        margin: '0',
+                        fontSize: '85%',
+                        backgroundColor: 'rgba(27, 31, 35, 0.05)',
+                        borderRadius: '4px',
+                        fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace',
+                        color: '#d14',
+                        whiteSpace: 'normal',
+                        wordBreak: 'keep-all',
+                        wordWrap: 'normal',
+                        borderStyle: 'none',
+                        verticalAlign: 'middle'
+                      }}
+                      dangerouslySetInnerHTML={{ __html: codeText }}
+                    />
+                  );
+                }
+                return <code {...props} className={`markdown-block-code ${className || ''}`}>{children}</code>;
+              },
+              
+              // 处理列表
+              ul: (props) => <ul {...props} className="markdown-ul" style={{marginBottom: '16px', paddingLeft: '2em', listStyleType: 'disc'}} />,
+              ol: (props) => <ol {...props} className="markdown-ol" style={{marginBottom: '16px', paddingLeft: '2em', listStyleType: 'decimal'}} />,
+              li: (props) => <li {...props} className="markdown-li" style={{marginBottom: '4px'}} />
+            }}
+          >
+            {preprocessMarkdown(content)}
+          </ReactMarkdown>
+        </div>
       )}
     </div>
   );

@@ -9,13 +9,22 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@doocs/md-cli": "^0.1.1",
     "@lark-base-open/js-sdk": "^0.3.6",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "axios": "^1.6.2",
     "github-markdown-css": "^5.8.1",
+    "katex": "^0.16.21",
     "marked": "^11.0.0",
+    "mermaid": "^11.5.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-markdown": "^10.1.0"
+    "react-markdown": "^10.1.0",
+    "react-syntax-highlighter": "^15.6.1",
+    "rehype-katex": "^7.0.1",
+    "rehype-raw": "^7.0.0",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0"
   },
   "devDependencies": {
     "@types/marked": "^5.0.2",
@@ -23,6 +32,7 @@
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",
     "@vitejs/plugin-react": "^4.2.0",
+    "terser": "^5.39.0",
     "typescript": "^5.2.2",
     "vite": "^5.0.0"
   }

@@ -3,7 +3,26 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- 暂时移除CSP限制，解决图片加载问题 -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src * data: https:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline'; connect-src 'self' *;"> -->
     <title>Markdown Field Extension</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" integrity="sha384-GvrOXuhMATgEsSwCs4smul74iXGOixntxDyaPWHYdIHQA8II1n1Vc7zudLNnmUKgh" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.2.0/github-markdown.min.css">
+    <style>
+      /* 禁用markdown警告提示标题的伪元素，因为我们使用自定义SVG图标 */
+      .markdown-alert-title::before {
+        display: none !important;
+      }
+      
+      /* 确保所有警告提示类型的伪元素都被禁用 */
+      .markdown-alert-note .markdown-alert-title::before,
+      .markdown-alert-tip .markdown-alert-title::before,
+      .markdown-alert-important .markdown-alert-title::before,
+      .markdown-alert-warning .markdown-alert-title::before,
+      .markdown-alert-caution .markdown-alert-title::before {
+        display: none !important;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

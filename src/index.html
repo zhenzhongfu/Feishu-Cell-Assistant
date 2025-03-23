@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- 暂时移除CSP限制，解决图片加载问题 -->
+  <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src * data: https:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline'; connect-src 'self' *;"> -->
+  <title>Markdown Field Extension</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" integrity="sha384-GvrOXuhMATgEsSwCs4smul74iXGOixntxDyaPWHYdIHQA8II1n1Vc7zudLNnmUKgh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.2.0/github-markdown.min.css">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      color: #24292e;
+    }
+    
+    #root {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* 全局固定样式 */
+    @media screen {
+      /* Mermaid图表容器相关样式 */
+      .mermaid-wrapper {
+        overflow: visible !important;
+        max-width: 100%;
+        z-index: 1;
+        position: relative;
+      }
+      
+      .mermaid {
+        overflow: visible !important;
+      }
+      
+      /* 修复SVG渲染 */
+      .mermaid svg {
+        max-width: 100%;
+        height: auto !important;
+        overflow: visible !important;
+      }
+      
+      /* 确保内容可以正常显示 */
+      .markdown-body .mermaid-wrapper {
+        display: block;
+        text-align: center;
+      }
+
+      /* 辅助SVG可视化的样式 */
+      .mermaid svg * {
+        vector-effect: non-scaling-stroke;
+      }
+
+      /* 修正线条渲染 */
+      .mermaid .flowchart-link {
+        stroke-width: 2px !important;
+      }
+
+      .mermaid .messageText {
+        fill: currentColor !important;
+      }
+      
+      /* 增强对SVG复制的支持 */
+      .mermaid svg,
+      svg.mermaid {
+        user-select: all !important;
+        -webkit-user-select: all !important;
+        -moz-user-select: all !important;
+        -ms-user-select: all !important;
+      }
+      
+      /* 确保复制时SVG可见 */
+      .mermaid foreignObject {
+        overflow: visible !important;
+      }
+      
+      /* 修复SVG中的文本复制问题 */
+      .mermaid text {
+        user-select: all !important;
+        -webkit-user-select: all !important;
+        -moz-user-select: all !important;
+        -ms-user-select: all !important;
+        white-space: pre !important;
+      }
+    }
+    
+    /* 打印样式 */
+    @media print {
+      body {
+        margin: 0;
+        padding: 15mm;
+      }
+      
+      .markdown-body {
+        max-width: 100% !important;
+      }
+      
+      .mermaid-wrapper,
+      .mermaid,
+      .mermaid svg {
+        max-width: 100% !important;
+        overflow: visible !important;
+      }
+    }
+    
+    /* 公众号兼容样式 */
+    @media screen {
+      .mp-compatible .mermaid-wrapper,
+      .mp-compatible .mermaid,
+      .mp-compatible .mermaid svg {
+        max-width: 100% !important;
+        overflow: visible !important;
+      }
+      
+      /* 确保内容不会超出容器 */
+      .mp-compatible {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+      }
+
+      /* 特别优化公众号兼容模式下的Mermaid渲染 */
+      .mp-compatible .mermaid-placeholder {
+        border: 1px solid #ddd !important;
+        background-color: #f7f7f7 !important;
+        border-radius: 4px !important;
+        padding: 10px !important;
+        margin: 10px 0 !important;
+        text-align: center !important;
+      }
+
+      .mp-compatible .mermaid-placeholder svg {
+        max-width: 100% !important;
+        height: auto !important;
+      }
+
+      .mp-compatible .mermaid-info {
+        font-size: 12px !important;
+        color: #666 !important;
+        margin-top: 8px !important;
+        font-style: italic !important;
+      }
+
+      /* 仅在屏幕媒体下应用这些样式 */
+      .mp-compatible * {
+        -webkit-user-select: text;
+        -moz-user-select: text;
+        -ms-user-select: text;
+        user-select: text;
+      }
+      
+      /* 确保SVG图标正确复制 */
+      .mp-compatible svg {
+        -webkit-user-select: all;
+        -moz-user-select: all;
+        -ms-user-select: all;
+        user-select: all;
+      }
+    }
+    
+    /* 用户选择样式 */
+    ::selection {
+      background-color: #b3d4fc;
+      text-shadow: none;
+    }
+
+    /* 修复公众号兼容模式下的SVG渲染问题 */
+    .mp-compatible svg foreignObject {
+      overflow: visible !important;
+    }
+
+    .mp-compatible svg * {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif !important;
+    }
+
+    /* 优化复制后的警告图标 */
+    .mp-compatible .markdown-alert {
+      position: relative;
+    }
+    
+    .mp-compatible .markdown-alert-title::before {
+      content: '';
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      margin-right: 8px;
+    }
+    
+    .mp-compatible .markdown-alert-note .markdown-alert-title::before {
+      background-color: #2eaadc;
+      border-radius: 50%;
+    }
+    
+    .mp-compatible .markdown-alert-tip .markdown-alert-title::before {
+      background-color: #0f9d58;
+      border-radius: 50%;
+    }
+    
+    .mp-compatible .markdown-alert-important .markdown-alert-title::before {
+      background-color: #f5b400;
+      border-radius: 50%;
+    }
+    
+    .mp-compatible .markdown-alert-warning .markdown-alert-title::before {
+      background-color: #f5a623;
+      border-radius: 50%;
+    }
+    
+    .mp-compatible .markdown-alert-caution .markdown-alert-title::before {
+      background-color: #eb5757;
+      border-radius: 50%;
+    }
+
+    /* 禁用markdown警告提示标题的伪元素，因为我们使用自定义SVG图标 */
+    .markdown-alert-title::before {
+      display: none !important;
+    }
+    
+    /* 确保所有警告提示类型的伪元素都被禁用 */
+    .markdown-alert-note .markdown-alert-title::before,
+    .markdown-alert-tip .markdown-alert-title::before,
+    .markdown-alert-important .markdown-alert-title::before,
+    .markdown-alert-warning .markdown-alert-title::before,
+    .markdown-alert-caution .markdown-alert-title::before {
+      display: none !important;
+    }
+    
+    /* Mermaid图表样式增强 */
+    .mermaid-wrapper,
+    .mermaid-container {
+      overflow: visible !important;
+      max-width: 100% !important;
+      text-align: center !important;
+      margin: 16px 0 !important;
+      position: relative !important;
+      display: block !important;
+    }
+    
+    .mermaid {
+      overflow: visible !important;
+      display: inline-block !important;
+      margin: 0 auto !important;
+      min-height: 30px !important;
+      width: 100% !important;
+    }
+    
+    .mermaid svg {
+      max-width: 100% !important;
+      height: auto !important;
+      overflow: visible !important;
+      display: block !important;
+      margin: 0 auto !important;
+    }
+    
+    /* 确保Notion风格下的Mermaid正确显示 */
+    .notion-style .mermaid-wrapper,
+    .notion-style .mermaid-container {
+      background-color: #f7f6f3 !important;
+      border: 1px solid #e3e2e0 !important;
+      border-radius: 3px !important;
+      padding: 16px !important;
+    }
+    
+    /* 深色模式下的Mermaid样式 */
+    .dark-mode .mermaid-wrapper,
+    .dark-mode .mermaid-container {
+      background-color: rgba(255, 255, 255, 0.05) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    .dark-mode .mermaid text {
+      fill: #e6e6e6 !important;
+    }
+    
+    /* 修复Mermaid节点样式 */
+    .mermaid .node rect,
+    .mermaid .node circle,
+    .mermaid .node ellipse,
+    .mermaid .node polygon,
+    .mermaid .node path {
+      fill: #f9f9f9 !important;
+      stroke: #999 !important;
+      stroke-width: 1px !important;
+    }
+    
+    .dark-mode .mermaid .node rect,
+    .dark-mode .mermaid .node circle,
+    .dark-mode .mermaid .node ellipse,
+    .dark-mode .mermaid .node polygon,
+    .dark-mode .mermaid .node path {
+      fill: #2d333b !important;
+      stroke: #666 !important;
+    }
+    
+    /* 修复Mermaid边线样式 */
+    .mermaid .edgePath .path {
+      stroke: #999 !important;
+      stroke-width: 1.5px !important;
+    }
+    
+    .dark-mode .mermaid .edgePath .path {
+      stroke: #aaa !important;
+    }
+
+    /* Mermaid图表相关样式 */
+    .mermaid {
+      visibility: visible !important;
+      display: block !important;
+      overflow: visible !important;
+    }
+    
+    .mermaid-wrapper, .mermaid-container {
+      overflow: visible !important;
+      text-align: center !important;
+      max-width: 100% !important;
+      margin-bottom: 16px !important;
+      position: relative !important;
+    }
+    
+    /* 确保复制后的Mermaid图表能够正确显示 */
+    .mp-compatible .mermaid-wrapper svg,
+    .mp-compatible .mermaid-container svg,
+    .mp-compatible .mermaid svg {
+      max-width: 100% !important;
+      height: auto !important;
+      display: inline-block !important;
+    }
+    
+    /* 当Mermaid图表被替换为公众号兼容格式时的样式 */
+    .mp-compatible .mermaid-placeholder {
+      text-align: center !important;
+      padding: 12px !important;
+      margin: 12px 0 !important;
+      background-color: #f6f8fa !important;
+      border: 1px solid #ddd !important;
+      border-radius: 5px !important;
+    }
+    
+    /* 确保复制后SVG预览的正确显示 */
+    .mp-compatible .mermaid-placeholder svg {
+      max-width: 100% !important;
+      height: auto !important;
+      display: inline-block !important;
+    }
+    
+    /* 用于正确复制SVG的特殊样式 */
+    .clipboard-svg-ready {
+      max-width: 100% !important;
+      height: auto !important;
+      display: inline-block !important;
+      overflow: visible !important;
+    }
+  </style>
+  <!-- 添加辅助处理SVG的脚本 -->
+  <script>
+    // 在DOM完全加载后执行
+    document.addEventListener('DOMContentLoaded', function() {
+      // 监听文档变化，处理新添加的SVG元素
+      const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          if (mutation.addedNodes && mutation.addedNodes.length > 0) {
+            for (let i = 0; i < mutation.addedNodes.length; i++) {
+              const node = mutation.addedNodes[i];
+              if (node.nodeType === 1) { // ELEMENT_NODE
+                // 查找新添加的SVG元素并处理
+                const svgElements = node.querySelectorAll ? node.querySelectorAll('svg') : [];
+                for (let j = 0; j < svgElements.length; j++) {
+                  enhanceSvgForCopy(svgElements[j]);
+                }
+              }
+            }
+          }
+        });
+      });
+      
+      // 开始观察文档变化
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+      
+      // 增强SVG以便于复制
+      function enhanceSvgForCopy(svg) {
+        if (!svg || svg._processed) return;
+        
+        // 确保SVG元素有正确的尺寸属性
+        if (!svg.getAttribute('width') && svg.getBoundingClientRect) {
+          const box = svg.getBoundingClientRect();
+          svg.setAttribute('width', box.width || '100%');
+          svg.setAttribute('height', box.height || 'auto');
+        }
+        
+        // 添加行内样式以确保可见性
+        svg.style.overflow = 'visible';
+        svg.style.maxWidth = '100%';
+        svg.style.display = 'block';
+        svg.style.margin = '0 auto';
+        
+        // 修复SVG中的外部对象(foreignObject)
+        const foreignObjects = svg.querySelectorAll('foreignObject');
+        for (let i = 0; i < foreignObjects.length; i++) {
+          foreignObjects[i].style.overflow = 'visible';
+        }
+        
+        // 确保所有文本元素可以正确复制
+        const textElements = svg.querySelectorAll('text');
+        for (let i = 0; i < textElements.length; i++) {
+          textElements[i].style.userSelect = 'all';
+          textElements[i].style.webkitUserSelect = 'all';
+          textElements[i].style.MozUserSelect = 'all';
+          textElements[i].style.msUserSelect = 'all';
+        }
+        
+        // 添加辅助类，确保复制到剪贴板时保留SVG
+        svg.classList.add('clipboard-svg-ready');
+        
+        // 标记为已处理，避免重复处理
+        svg._processed = true;
+      }
+      
+      // 监听复制事件，确保SVG正确复制
+      document.addEventListener('copy', function(e) {
+        // 不干预用户选择的内容，但为所有SVG元素添加辅助类
+        const svgs = document.querySelectorAll('svg');
+        svgs.forEach(enhanceSvgForCopy);
+      });
+    });
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/index.tsx"></script>
+</body>
+</html> 
