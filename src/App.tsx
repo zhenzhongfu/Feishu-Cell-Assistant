@@ -41,12 +41,6 @@ const themes = {
   }
 };
 
-// 定义主题模式类型
-enum ThemeModeType {
-  Light = 'light',
-  Dark = 'dark'
-}
-
 // 深色主题风格映射
 const darkThemes = {
   notionLight: {
@@ -377,6 +371,12 @@ const globalStyles = `
   transform: rotate(45deg);
 }
 `;
+
+// 定义主题模式类型
+enum ThemeModeType {
+  Light = 'light',
+  Dark = 'dark'
+}
 
 // 添加更完整的LaTeX到ASCII/Unicode的映射函数
 const convertLatexToUnicode = (texCode: string): string => {
@@ -967,16 +967,22 @@ const App: React.FC = () => {
         // 获取当前主题
         if (bitable?.base) {
           const base = bitable.base;
+          // 使用类型断言
+          const baseWithTheme = base as unknown as {
+            getTheme: () => Promise<string>;
+            onThemeChange: (callback: (theme: string) => void) => void;
+          };
+
           // 检查 getTheme 方法是否存在
-          if (typeof base.getTheme === 'function') {
-          const currentTheme = await base.getTheme();
-          setBitableTheme(currentTheme as ThemeModeType);
-          
+          if (typeof baseWithTheme.getTheme === 'function') {
+            const currentTheme = await baseWithTheme.getTheme();
+            setBitableTheme(currentTheme as ThemeModeType);
+            
             // 检查 onThemeChange 方法是否存在
-            if (typeof base.onThemeChange === 'function') {
-          base.onThemeChange((theme: string) => {
-            setBitableTheme(theme as ThemeModeType);
-          });
+            if (typeof baseWithTheme.onThemeChange === 'function') {
+              baseWithTheme.onThemeChange((theme: string) => {
+                setBitableTheme(theme as ThemeModeType);
+              });
             }
           } else {
             // 如果没有 getTheme 方法，使用默认主题

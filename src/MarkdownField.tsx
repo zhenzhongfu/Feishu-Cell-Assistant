@@ -46,7 +46,10 @@ interface MarkdownFieldProps {
   onSave?: (value: string) => void;
 }
 
-const MarkdownField: React.FC<MarkdownFieldProps> = ({ initialValue = '', onSave }) => {
+const MarkdownField: React.FC<MarkdownFieldProps> = ({ 
+  initialValue = '', 
+  onSave 
+}) => {
   const [content, setContent] = useState(initialValue);
   const [isEditing, setIsEditing] = useState(false);
 
