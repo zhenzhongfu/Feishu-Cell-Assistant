@@ -8,19 +8,19 @@ import mermaid from 'mermaid';
 import 'katex/dist/katex.min.css';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { 
-  oneDark, 
+  // oneDark, 
   oneLight,
   tomorrow
 } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-// Mac风格的代码块窗口按钮SVG
-const macCodeSvg = `
-  <svg xmlns="http://www.w3.org/2000/svg" version="1.1" x="0px" y="0px" width="45px" height="13px" viewBox="0 0 450 130">
-    <ellipse cx="50" cy="65" rx="50" ry="52" stroke="rgb(220,60,54)" stroke-width="2" fill="rgb(237,108,96)" />
-    <ellipse cx="225" cy="65" rx="50" ry="52" stroke="rgb(218,151,33)" stroke-width="2" fill="rgb(247,193,81)" />
-    <ellipse cx="400" cy="65" rx="50" ry="52" stroke="rgb(27,161,37)" stroke-width="2" fill="rgb(100,200,86)" />
-  </svg>
-`.trim();
+// // Mac风格的代码块窗口按钮SVG
+// const macCodeSvg = `
+//   <svg xmlns="http://www.w3.org/2000/svg" version="1.1" x="0px" y="0px" width="45px" height="13px" viewBox="0 0 450 130">
+//     <ellipse cx="50" cy="65" rx="50" ry="52" stroke="rgb(220,60,54)" stroke-width="2" fill="rgb(237,108,96)" />
+//     <ellipse cx="225" cy="65" rx="50" ry="52" stroke="rgb(218,151,33)" stroke-width="2" fill="rgb(247,193,81)" />
+//     <ellipse cx="400" cy="65" rx="50" ry="52" stroke="rgb(27,161,37)" stroke-width="2" fill="rgb(100,200,86)" />
+//   </svg>
+// `.trim();
 
 // 创建HTML实体解码器
 const decodeHTML = (html: string): string => {
@@ -206,7 +206,7 @@ export const preprocessMarkdown = (markdown: string): string => {
     // 例如：如果发现 "1. " 这样的内容但没有被识别为列表
     processedMarkdown = processedMarkdown.replace(
       /^([\s]*)(\d+)\.[\s]+([^\n]+)$/gm,
-      (match, space, num, content) => {
+      (_, space, num, content) => {
         // 确保这一行前后有空行
         return `\n${space}${num}. ${content}\n`;
       }
@@ -220,20 +220,20 @@ export const preprocessMarkdown = (markdown: string): string => {
 };
 
 // 在操作DOM前添加安全检查
-const safeClosest = (element: any, selector: string): Element | null => {
-  if (!element || typeof element.closest !== 'function') {
-    return null;
-  }
-  return element.closest(selector);
-};
+// const safeClosest = (element: any, selector: string): Element | null => {
+//   if (!element || typeof element.closest !== 'function') {
+//     return null;
+//   }
+//   return element.closest(selector);
+// };
 
-// 安全的getAttribute函数
-const safeGetAttribute = (element: any, attr: string): string | null => {
-  if (!element || typeof element.getAttribute !== 'function') {
-    return null;
-  }
-  return element.getAttribute(attr);
-};
+// // 安全的getAttribute函数
+// const safeGetAttribute = (element: any, attr: string): string | null => {
+//   if (!element || typeof element.getAttribute !== 'function') {
+//     return null;
+//   }
+//   return element.getAttribute(attr);
+// };
 
 // 添加警告图标SVG组件
 const AlertIcons = {
@@ -901,7 +901,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme = 'n
               
               // Mermaid图表特殊处理
               if (language === 'mermaid') {
-                const mermaidId = `mermaid-${Math.random().toString(36).substring(2, 10)}`;
+                // const mermaidId = `mermaid-${Math.random().toString(36).substring(2, 10)}`;
                 return (
                   <div className="mermaid-container" style={{
                     backgroundColor: darkMode

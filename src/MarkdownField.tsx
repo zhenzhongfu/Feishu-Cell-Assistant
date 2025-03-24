@@ -31,7 +31,7 @@ export class MarkdownFieldExtension {
   }
 
   // 验证单元格值
-  async validate(value: string) {
+  async validate() {
     return true;
   }
 
