@@ -5,7 +5,7 @@ import MarkdownRenderer from './utils/MarkdownRenderer';
 import { testMarkdown } from './test-markdown';
 import './App.css';
 import mermaid from 'mermaid';
-import MarkdownField from './MarkdownField';
+// import MarkdownField from './MarkdownField';
 
 // 定义主题样式
 const themes = {
@@ -477,7 +477,7 @@ const App: React.FC = () => {
     const protectedCode = new Map<string, string>();
     let codeBlockId = 0;
     
-    let processed = decodedValue.replace(/`([^`]+)`/g, (match, codeContent) => {
+    let processed = decodedValue.replace(/`([^`]+)`/g, (match, _) => {
       const placeholder = `__INLINE_CODE_${codeBlockId++}__`;
       protectedCode.set(placeholder, match);
       return placeholder;
@@ -489,7 +489,7 @@ const App: React.FC = () => {
     });
     
     // 步骤3: 保护图片语法
-    processed = processed.replace(/!\[(.*?)\]\((.*?)\)/g, (match, alt, url) => {
+    processed = processed.replace(/!\[(.*?)\]\((.*?)\)/g, (_, alt, url) => {
       return `__IMG_MD__${alt}__IMG_URL__${url}__IMG_END__`;
     });
     
@@ -532,25 +532,25 @@ const App: React.FC = () => {
   };
 
   // 处理HTML，确保嵌套引用能够正确显示
-  const processNestedQuotes = (html: string): string => {
-    // 使用正则表达式找到嵌套的引用
-    return html.replace(
-      /<blockquote[^>]*>(?:(?!<\/blockquote>)[\s\S])*?<blockquote[^>]*>([\s\S]*?)<\/blockquote>[\s\S]*?<\/blockquote>/g,
-      (match) => {
-        // 将嵌套引用用特殊标记替换
-        return match.replace(
-          /<blockquote([^>]*)>([\s\S]*?)(?=<\/blockquote>)/g, 
-          (_m, attrs, content) => {
-            // 给内部blockquote添加特殊标记
-            if (content.includes('<blockquote')) {
-              return `<blockquote${attrs} data-nested="true" style="padding:0 1em !important;color:#6a737d !important;border-left:0.25em solid #dfe2e5 !important;margin:8px 0 !important;display:block !important"><div class="nested-quote-marker" style="font-weight:bold;color:#6a737d;margin-bottom:4px">引用：</div>${content}`;
-            }
-            return `<blockquote${attrs}>${content}`;
-          }
-        );
-      }
-    );
-  };
+  // const processNestedQuotes = (html: string): string => {
+  //   // 使用正则表达式找到嵌套的引用
+  //   return html.replace(
+  //     /<blockquote[^>]*>(?:(?!<\/blockquote>)[\s\S])*?<blockquote[^>]*>([\s\S]*?)<\/blockquote>[\s\S]*?<\/blockquote>/g,
+  //     (match) => {
+  //       // 将嵌套引用用特殊标记替换
+  //       return match.replace(
+  //         /<blockquote([^>]*)>([\s\S]*?)(?=<\/blockquote>)/g, 
+  //         (_m, attrs, content) => {
+  //           // 给内部blockquote添加特殊标记
+  //           if (content.includes('<blockquote')) {
+  //             return `<blockquote${attrs} data-nested="true" style="padding:0 1em !important;color:#6a737d !important;border-left:0.25em solid #dfe2e5 !important;margin:8px 0 !important;display:block !important"><div class="nested-quote-marker" style="font-weight:bold;color:#6a737d;margin-bottom:4px">引用：</div>${content}`;
+  //           }
+  //           return `<blockquote${attrs}>${content}`;
+  //         }
+  //       );
+  //     }
+  //   );
+  // };
 
   // 引用块处理
   const processBlockquotes = (containerEl: HTMLElement): void => {
