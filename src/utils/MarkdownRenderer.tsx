@@ -60,130 +60,163 @@ const cleanImageUrl = (url: string): string => {
 
 // 规范化有序列表格式
 const normalizeOrderedLists = (markdown: string): string => {
-  let result = markdown;
-  
-  // 识别可能的有序列表模式
-  const orderedListPatterns = [
-    // 匹配标准的有序列表：1. 项目
-    /^(\s*)(\d+)\.(\s+)(.+)$/gm,
-    // 匹配没有空格的有序列表：1.项目
-    /^(\s*)(\d+)\.(\S+.*)$/gm,
-    // 匹配使用括号的有序列表：1) 项目
-    /^(\s*)(\d+)\)(\s+)(.+)$/gm,
-    // 匹配没有空格的括号列表：1)项目
-    /^(\s*)(\d+)\)(\S+.*)$/gm
-  ];
-  
-  // 应用每个模式，转换为标准Markdown有序列表格式
-  orderedListPatterns.forEach(pattern => {
-    result = result.replace(pattern, (match, space, num, separator, content) => {
-      if (!separator.includes(' ')) {
-        separator = ' '; // 确保有空格
-      }
-      return `${space}${num}. ${content.trim()}`;
+  // 确保输入是字符串
+  if (typeof markdown !== 'string') {
+    console.warn('normalizeOrderedLists: 输入不是字符串类型', markdown);
+    return '';
+  }
+
+  try {
+    let result = markdown;
+    
+    // 识别可能的有序列表模式
+    const orderedListPatterns = [
+      // 匹配标准的有序列表：1. 项目
+      /^(\s*)(\d+)\.(\s+)(.+)$/gm,
+      // 匹配没有空格的有序列表：1.项目
+      /^(\s*)(\d+)\.(\S+.*)$/gm,
+      // 匹配使用括号的有序列表：1) 项目
+      /^(\s*)(\d+)\)(\s+)(.+)$/gm,
+      // 匹配没有空格的括号列表：1)项目
+      /^(\s*)(\d+)\)(\S+.*)$/gm
+    ];
+    
+    // 应用每个模式，转换为标准Markdown有序列表格式
+    orderedListPatterns.forEach(pattern => {
+      result = result.replace(pattern, (match, space, num, separator, content) => {
+        try {
+          if (!separator || typeof separator !== 'string') {
+            separator = ' ';
+          }
+          const safeContent = typeof content === 'string' ? content.trim() : '';
+          const safeSpace = typeof space === 'string' ? space : '';
+          const safeNum = typeof num === 'string' ? num : '1';
+          
+          return `${safeSpace}${safeNum}. ${safeContent}`;
+        } catch (e) {
+          console.error('列表项处理错误:', e);
+          return match; // 出错时返回原始匹配内容
+        }
+      });
     });
-  });
-  
-  // 确保连续的有序列表项之间不会有多余的空行
-  result = result.replace(
-    /^(\s*)(\d+)\.(\s+)(.+)(\n+)(\s*)(\d+)\.(\s+)/gm,
-    (match, space1, num1, sep1, content, newlines, space2, num2, sep2) => {
-      // 如果有多于一个的空行，减少为一个
-      if (newlines.length > 1) {
-        return `${space1}${num1}. ${content}\n${space2}${num2}. `;
+    
+    // 确保连续的有序列表项之间不会有多余的空行
+    result = result.replace(
+      /^(\s*)(\d+)\.(\s+)(.+)(\n+)(\s*)(\d+)\.(\s+)/gm,
+      (match, space1, num1, sep1, content, newlines, space2, num2, sep2) => {
+        try {
+          const safeNewlines = typeof newlines === 'string' && newlines.length > 1 ? '\n' : newlines;
+          return `${space1}${num1}. ${content}${safeNewlines}${space2}${num2}. `;
+        } catch (e) {
+          console.error('列表间距处理错误:', e);
+          return match; // 出错时返回原始匹配内容
+        }
       }
-      return match; // 否则保持不变
-    }
-  );
-  
-  return result;
+    );
+    
+    return result;
+  } catch (e) {
+    console.error('normalizeOrderedLists 处理错误:', e);
+    return markdown; // 出错时返回原始输入
+  }
 };
 
 // 预处理Markdown内容
 export const preprocessMarkdown = (markdown: string): string => {
-  // 先解码HTML实体
-  const decodedMarkdown = decodeHTML(markdown);
-  
-  // 统一换行符
-  let processedMarkdown = decodedMarkdown.replace(/\r\n/g, '\n');
-  
-  // 规范化有序列表格式
-  processedMarkdown = normalizeOrderedLists(processedMarkdown);
-  
-  // 确保列表项被正确识别 - 针对可能的格式问题
-  // 1. 检查每行开头，如果是 "• " 这样的圆点符号，替换为 Markdown 标准的 "- "
-  processedMarkdown = processedMarkdown.replace(/^([ \t]*)([•●◦○])[ \t]+/gm, '$1- ');
-  processedMarkdown = processedMarkdown.replace(/\n([ \t]*)([•●◦○])[ \t]+/g, '\n$1- ');
-  
-  // 确保文档开头的列表项有足够的空行
-  if (/^[\s]*[-*+][\s]/.test(processedMarkdown)) {
-    processedMarkdown = '\n\n' + processedMarkdown;
+  // 确保输入是字符串
+  if (typeof markdown !== 'string') {
+    console.warn('preprocessMarkdown: 输入不是字符串类型，尝试转换', markdown);
+    return String(markdown || '');
   }
-  
-  // 确保文档开头的有序列表项有足够的空行
-  if (/^[\s]*\d+\.[\s]/.test(processedMarkdown)) {
-    processedMarkdown = '\n\n' + processedMarkdown;
+
+  try {
+    // 先解码HTML实体
+    const decodedMarkdown = decodeHTML(markdown);
+    
+    // 统一换行符
+    let processedMarkdown = decodedMarkdown.replace(/\r\n/g, '\n');
+    
+    // 规范化有序列表格式
+    processedMarkdown = normalizeOrderedLists(processedMarkdown);
+    
+    // 确保列表项被正确识别 - 针对可能的格式问题
+    // 1. 检查每行开头，如果是 "• " 这样的圆点符号，替换为 Markdown 标准的 "- "
+    processedMarkdown = processedMarkdown.replace(/^([ \t]*)([•●◦○])[ \t]+/gm, '$1- ');
+    processedMarkdown = processedMarkdown.replace(/\n([ \t]*)([•●◦○])[ \t]+/g, '\n$1- ');
+    
+    // 确保文档开头的列表项有足够的空行
+    if (/^[\s]*[-*+][\s]/.test(processedMarkdown)) {
+      processedMarkdown = '\n\n' + processedMarkdown;
+    }
+    
+    // 确保文档开头的有序列表项有足够的空行
+    if (/^[\s]*\d+\.[\s]/.test(processedMarkdown)) {
+      processedMarkdown = '\n\n' + processedMarkdown;
+    }
+    
+    // 确保列表项之前有空行（针对无序列表）
+    processedMarkdown = processedMarkdown.replace(
+      /([^\n])\n([ \t]*)[-*+][ \t]+/g,
+      '$1\n\n$2- '
+    );
+    
+    // 确保有序列表项之前有空行，并保留列表编号
+    processedMarkdown = processedMarkdown.replace(
+      /([^\n])\n([ \t]*)(\d+)\.[ \t]+/g,
+      '$1\n\n$2$3. '
+    );
+    
+    // 处理无序列表项格式
+    processedMarkdown = processedMarkdown.replace(
+      /(\n\n)([ \t]*)[-*+][ \t]+([^\n]+)/g,
+      '$1$2- $3'
+    );
+    
+    // 处理有序列表项格式，确保格式正确
+    processedMarkdown = processedMarkdown.replace(
+      /(\n\n)([ \t]*)(\d+)\.[ \t]+([^\n]+)/g,
+      '$1$2$3. $4'
+    );
+    
+    // 确保连续的有序列表项被识别为一个列表
+    processedMarkdown = processedMarkdown.replace(
+      /(\n)([ \t]*)(\d+)\.[ \t]+([^\n]+)(\n+)([ \t]*)(\d+)\.[ \t]+/g,
+      '$1$2$3. $4\n$6$7. '
+    );
+    
+    // 确保连续的无序列表项被识别为一个列表
+    processedMarkdown = processedMarkdown.replace(
+      /(\n)([ \t]*)[-*+][ \t]+([^\n]+)(\n+)([ \t]*)[-*+][ \t]+/g,
+      '$1$2- $3\n$5- '
+    );
+    
+    // 确保代码块前后有空行
+    processedMarkdown = processedMarkdown.replace(/([^\n])\n```/g, '$1\n\n```');
+    processedMarkdown = processedMarkdown.replace(/```\n([^\n])/g, '```\n\n$1');
+    
+    // 处理GFM警告提示语法支持
+    processedMarkdown = processedMarkdown.replace(
+      /\n\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\](.*?)(?=\n\[!|\n\n|$)/gs,
+      (_match, type, content) => {
+        return `\n\n[!${type}]${content.trim()}\n\n`;
+      }
+    );
+    
+    // 处理看起来像有序列表但没有正确格式化的内容
+    // 例如：如果发现 "1. " 这样的内容但没有被识别为列表
+    processedMarkdown = processedMarkdown.replace(
+      /^([\s]*)(\d+)\.[\s]+([^\n]+)$/gm,
+      (match, space, num, content) => {
+        // 确保这一行前后有空行
+        return `\n${space}${num}. ${content}\n`;
+      }
+    );
+    
+    return processedMarkdown;
+  } catch (e) {
+    console.error('preprocessMarkdown 处理错误:', e);
+    return markdown; // 出错时返回原始输入
   }
-  
-  // 确保列表项之前有空行（针对无序列表）
-  processedMarkdown = processedMarkdown.replace(
-    /([^\n])\n([ \t]*)[-*+][ \t]+/g,
-    '$1\n\n$2- '
-  );
-  
-  // 确保有序列表项之前有空行，并保留列表编号
-  processedMarkdown = processedMarkdown.replace(
-    /([^\n])\n([ \t]*)(\d+)\.[ \t]+/g,
-    '$1\n\n$2$3. '
-  );
-  
-  // 处理无序列表项格式
-  processedMarkdown = processedMarkdown.replace(
-    /(\n\n)([ \t]*)[-*+][ \t]+([^\n]+)/g,
-    '$1$2- $3'
-  );
-  
-  // 处理有序列表项格式，确保格式正确
-  processedMarkdown = processedMarkdown.replace(
-    /(\n\n)([ \t]*)(\d+)\.[ \t]+([^\n]+)/g,
-    '$1$2$3. $4'
-  );
-  
-  // 确保连续的有序列表项被识别为一个列表
-  processedMarkdown = processedMarkdown.replace(
-    /(\n)([ \t]*)(\d+)\.[ \t]+([^\n]+)(\n+)([ \t]*)(\d+)\.[ \t]+/g,
-    '$1$2$3. $4\n$6$7. '
-  );
-  
-  // 确保连续的无序列表项被识别为一个列表
-  processedMarkdown = processedMarkdown.replace(
-    /(\n)([ \t]*)[-*+][ \t]+([^\n]+)(\n+)([ \t]*)[-*+][ \t]+/g,
-    '$1$2- $3\n$5- '
-  );
-  
-  // 确保代码块前后有空行
-  processedMarkdown = processedMarkdown.replace(/([^\n])\n```/g, '$1\n\n```');
-  processedMarkdown = processedMarkdown.replace(/```\n([^\n])/g, '```\n\n$1');
-  
-  // 处理GFM警告提示语法支持
-  processedMarkdown = processedMarkdown.replace(
-    /\n\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\](.*?)(?=\n\[!|\n\n|$)/gs,
-    (_match, type, content) => {
-      return `\n\n[!${type}]${content.trim()}\n\n`;
-    }
-  );
-  
-  // 处理看起来像有序列表但没有正确格式化的内容
-  // 例如：如果发现 "1. " 这样的内容但没有被识别为列表
-  processedMarkdown = processedMarkdown.replace(
-    /^([\s]*)(\d+)\.[\s]+([^\n]+)$/gm,
-    (match, space, num, content) => {
-      // 确保这一行前后有空行
-      return `\n${space}${num}. ${content}\n`;
-    }
-  );
-  
-  return processedMarkdown;
 };
 
 // 在操作DOM前添加安全检查
@@ -282,25 +315,22 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 }
 
 const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme = 'notionStyle', darkMode = false }) => {
-  const processedContent = preprocessMarkdown(content);
+  // 确保 content 是字符串类型
+  const safeContent = typeof content === 'string' ? content : String(content || '');
+  const processedContent = preprocessMarkdown(safeContent);
   
   // 初始化mermaid
   useEffect(() => {
     // 确保DOM已经完全准备好
     setTimeout(() => {
       try {
-        console.log('初始化Mermaid图表，主题:', theme, '深色模式:', darkMode);
-        
         // 手动运行mermaid
         const mermaidDivs = document.querySelectorAll('.mermaid');
-        console.log('找到Mermaid容器数量:', mermaidDivs.length);
         if (mermaidDivs.length > 0) {
           // 检查是否有需要渲染的图表（未渲染的）
           const needsRendering = Array.from(mermaidDivs).some(div => !div.querySelector('svg'));
           
           if (needsRendering) {
-            console.log('发现未渲染的Mermaid图表，将进行渲染');
-            
             // 重置mermaid以避免多次初始化冲突
             if (typeof mermaid.mermaidAPI !== 'undefined') {
               try {
@@ -334,11 +364,9 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme = 'n
               try {
                 // 跳过已经渲染的图表
                 if (div.querySelector('svg')) {
-                  console.log('跳过已渲染的Mermaid图表');
                   return;
                 }
                 
-                console.log('处理Mermaid内容:', div.textContent);
                 // 确保容器可见性
                 (div as HTMLElement).style.visibility = 'visible';
                 (div as HTMLElement).style.display = 'block';
@@ -361,8 +389,6 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme = 'n
                 console.error('设置Mermaid容器样式失败:', err);
               }
             });
-          } else {
-            console.log('所有Mermaid图表已渲染，无需处理');
           }
         }
       } catch (error) {
@@ -542,12 +568,12 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme = 'n
             },
             
             // 处理标题
-            h1: ({...props}) => <h1 {...props} className="markdown-h1" />,
-            h2: ({...props}) => <h2 {...props} className="markdown-h2" />,
-            h3: ({...props}) => <h3 {...props} className="markdown-h3" />,
-            h4: ({...props}) => <h4 {...props} className="markdown-h4" />,
-            h5: ({...props}) => <h5 {...props} className="markdown-h5" />,
-            h6: ({...props}) => <h6 {...props} className="markdown-h6" />,
+            h1: ({...props}) => <h1 {...props} />,
+            h2: ({...props}) => <h2 {...props} />,
+            h3: ({...props}) => <h3 {...props} />,
+            h4: ({...props}) => <h4 {...props} />,
+            h5: ({...props}) => <h5 {...props} />,
+            h6: ({...props}) => <h6 {...props} />,
             
             // 处理列表
             ul: ({...props}) => <ul {...props} className="markdown-ul" style={{
@@ -777,7 +803,6 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme = 'n
                 
                 // 判断是否为Mermaid代码块
                 if (language === 'mermaid') {
-                  console.log('检测到Mermaid代码块:', String(children));
                   // 生成唯一ID以避免冲突
                   const mermaidId = `mermaid-${Math.random().toString(36).substring(2, 10)}`;
                   return (
@@ -876,7 +901,6 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme = 'n
               
               // Mermaid图表特殊处理
               if (language === 'mermaid') {
-                console.log('pre组件中检测到Mermaid语言');
                 const mermaidId = `mermaid-${Math.random().toString(36).substring(2, 10)}`;
                 return (
                   <div className="mermaid-container" style={{
@@ -914,9 +938,11 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme = 'n
                     borderTopLeftRadius: theme === 'notionStyle' ? '3px' : '8px',
                     borderTopRightRadius: theme === 'notionStyle' ? '3px' : '8px'
                   }}>
-                    <span className="markdown-code-button red"></span>
-                    <span className="markdown-code-button yellow"></span>
-                    <span className="markdown-code-button green"></span>
+                    <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="45px" height="13px" viewBox="0 0 450 130">
+                      <ellipse cx="50" cy="65" rx="50" ry="52" stroke="rgb(220,60,54)" strokeWidth="2" fill="rgb(237,108,96)" />
+                      <ellipse cx="225" cy="65" rx="50" ry="52" stroke="rgb(218,151,33)" strokeWidth="2" fill="rgb(247,193,81)" />
+                      <ellipse cx="400" cy="65" rx="50" ry="52" stroke="rgb(27,161,37)" strokeWidth="2" fill="rgb(100,200,86)" />
+                    </svg>
                     <span className="markdown-code-language" style={{
                       marginLeft: 'auto',
                       fontSize: theme === 'notionStyle' ? '12px' : '13px',
@@ -958,8 +984,6 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme = 'n
             
             // 处理图片
             img: ({...props}) => {
-              console.log('处理图片原始属性:', props);
-              
               // 确保src属性存在且不为空并清理URL
               let imgSrc = props.src ? cleanImageUrl(props.src) : '';
               
@@ -986,7 +1010,6 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme = 'n
                     e.currentTarget.setAttribute('alt', `图片加载失败: ${props.alt || imgSrc}`);
                   }}
                   onLoad={() => {
-                    console.log('图片加载成功:', imgSrc);
                   }}
                 />
               );

@@ -6,7 +6,7 @@
   <!-- 暂时移除CSP限制，解决图片加载问题 -->
   <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src * data: https:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline'; connect-src 'self' *;"> -->
   <title>Markdown Field Extension</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" integrity="sha384-GvrOXuhMATgEsSwCs4smul74iXGOixntxDyaPWHYdIHQA8II1n1Vc7zudLNnmUKgh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.2.0/github-markdown.min.css">
   <style>
     html, body {
@@ -112,114 +112,13 @@
       }
     }
     
-    /* 公众号兼容样式 */
-    @media screen {
-      .mp-compatible .mermaid-wrapper,
-      .mp-compatible .mermaid,
-      .mp-compatible .mermaid svg {
-        max-width: 100% !important;
-        overflow: visible !important;
-      }
-      
-      /* 确保内容不会超出容器 */
-      .mp-compatible {
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-      }
-
-      /* 特别优化公众号兼容模式下的Mermaid渲染 */
-      .mp-compatible .mermaid-placeholder {
-        border: 1px solid #ddd !important;
-        background-color: #f7f7f7 !important;
-        border-radius: 4px !important;
-        padding: 10px !important;
-        margin: 10px 0 !important;
-        text-align: center !important;
-      }
-
-      .mp-compatible .mermaid-placeholder svg {
-        max-width: 100% !important;
-        height: auto !important;
-      }
-
-      .mp-compatible .mermaid-info {
-        font-size: 12px !important;
-        color: #666 !important;
-        margin-top: 8px !important;
-        font-style: italic !important;
-      }
-
-      /* 仅在屏幕媒体下应用这些样式 */
-      .mp-compatible * {
-        -webkit-user-select: text;
-        -moz-user-select: text;
-        -ms-user-select: text;
-        user-select: text;
-      }
-      
-      /* 确保SVG图标正确复制 */
-      .mp-compatible svg {
-        -webkit-user-select: all;
-        -moz-user-select: all;
-        -ms-user-select: all;
-        user-select: all;
-      }
-    }
-    
     /* 用户选择样式 */
     ::selection {
       background-color: #b3d4fc;
       text-shadow: none;
     }
 
-    /* 修复公众号兼容模式下的SVG渲染问题 */
-    .mp-compatible svg foreignObject {
-      overflow: visible !important;
-    }
-
-    .mp-compatible svg * {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif !important;
-    }
-
-    /* 优化复制后的警告图标 */
-    .mp-compatible .markdown-alert {
-      position: relative;
-    }
-    
-    .mp-compatible .markdown-alert-title::before {
-      content: '';
-      display: inline-block;
-      width: 16px;
-      height: 16px;
-      margin-right: 8px;
-    }
-    
-    .mp-compatible .markdown-alert-note .markdown-alert-title::before {
-      background-color: #2eaadc;
-      border-radius: 50%;
-    }
-    
-    .mp-compatible .markdown-alert-tip .markdown-alert-title::before {
-      background-color: #0f9d58;
-      border-radius: 50%;
-    }
-    
-    .mp-compatible .markdown-alert-important .markdown-alert-title::before {
-      background-color: #f5b400;
-      border-radius: 50%;
-    }
-    
-    .mp-compatible .markdown-alert-warning .markdown-alert-title::before {
-      background-color: #f5a623;
-      border-radius: 50%;
-    }
-    
-    .mp-compatible .markdown-alert-caution .markdown-alert-title::before {
-      background-color: #eb5757;
-      border-radius: 50%;
-    }
-
-    /* 禁用markdown警告提示标题的伪元素，因为我们使用自定义SVG图标 */
+    /* 修复警告提示标题的伪元素，因为我们使用自定义SVG图标 */
     .markdown-alert-title::before {
       display: none !important;
     }
@@ -325,38 +224,179 @@
       position: relative !important;
     }
     
-    /* 确保复制后的Mermaid图表能够正确显示 */
-    .mp-compatible .mermaid-wrapper svg,
-    .mp-compatible .mermaid-container svg,
-    .mp-compatible .mermaid svg {
-      max-width: 100% !important;
-      height: auto !important;
-      display: inline-block !important;
-    }
-    
-    /* 当Mermaid图表被替换为公众号兼容格式时的样式 */
-    .mp-compatible .mermaid-placeholder {
-      text-align: center !important;
-      padding: 12px !important;
-      margin: 12px 0 !important;
-      background-color: #f6f8fa !important;
-      border: 1px solid #ddd !important;
-      border-radius: 5px !important;
-    }
-    
-    /* 确保复制后SVG预览的正确显示 */
-    .mp-compatible .mermaid-placeholder svg {
-      max-width: 100% !important;
-      height: auto !important;
-      display: inline-block !important;
-    }
-    
     /* 用于正确复制SVG的特殊样式 */
     .clipboard-svg-ready {
       max-width: 100% !important;
       height: auto !important;
       display: inline-block !important;
       overflow: visible !important;
+    }
+
+    /* 代码块样式 */
+    .markdown-code-wrapper {
+      margin: 4px 0;
+      border-radius: 4px;
+      background: rgb(247, 246, 243);
+      font-size: 85%;
+      box-shadow: rgba(15, 15, 15, 0.1) 0px 0px 0px 1px inset;
+    }
+
+    .markdown-code-header {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      background: rgb(240, 243, 246);
+      border-bottom: 1px solid rgb(221, 221, 221);
+      border-top-left-radius: 4px;
+      border-top-right-radius: 4px;
+    }
+
+    .markdown-code-buttons {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .markdown-code-button {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: none;
+      padding: 0;
+      margin: 0;
+      display: inline-block;
+    }
+
+    .markdown-code-button.red {
+      background: rgb(237, 108, 96);
+      border: 1px solid rgb(220, 60, 54);
+    }
+
+    .markdown-code-button.yellow {
+      background: rgb(247, 193, 81);
+      border: 1px solid rgb(218, 151, 33);
+    }
+
+    .markdown-code-button.green {
+      background: rgb(100, 200, 86);
+      border: 1px solid rgb(27, 161, 37);
+    }
+
+    .markdown-code-language {
+      margin-left: auto;
+      font-size: 13px;
+      font-weight: 600;
+      color: rgb(87, 96, 106);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .markdown-code-content {
+      margin: 0;
+      padding: 1.4em 1em;
+      overflow: auto;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+      line-height: 1.5;
+      background: rgb(247, 246, 243);
+      border-bottom-left-radius: 4px;
+      border-bottom-right-radius: 4px;
+    }
+
+    .markdown-code-content pre {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      font-size: 0.9em;
+    }
+
+    .markdown-code-content .react-syntax-highlighter-line-number {
+      color: rgba(55, 53, 47, 0.4);
+      min-width: 2.5em;
+      padding-right: 1em;
+      text-align: right;
+      user-select: none;
+      font-size: 0.9em;
+    }
+
+    /* 深色模式样式 */
+    .dark-mode .markdown-code-wrapper {
+      background: rgb(37, 37, 37);
+      box-shadow: rgba(255, 255, 255, 0.1) 0px 0px 0px 1px inset;
+    }
+
+    .dark-mode .markdown-code-header {
+      background: rgb(37, 37, 37);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .dark-mode .markdown-code-language {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .dark-mode .markdown-code-content {
+      background: rgb(37, 37, 37);
+      color: rgb(220, 220, 220);
+    }
+
+    .dark-mode .markdown-code-content .react-syntax-highlighter-line-number {
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Markdown 标题样式 */
+    .markdown-body h1,
+    .markdown-body h2,
+    .markdown-body h3,
+    .markdown-body h4,
+    .markdown-body h5,
+    .markdown-body h6 {
+      margin-top: 10em;
+      margin-bottom: 4em;
+    }
+
+    /* 第一个标题不需要太大的上边距 */
+    .markdown-body *:first-child {
+      margin-top: 0;
+    }
+
+    /* 针对不同级别标题的具体调整 */
+    .markdown-body h1 {
+      margin-top: 12em;
+      margin-bottom: 4em;
+      padding-bottom: 0.5em;
+      border-bottom: 1px solid #eaecef;
+    }
+
+    .markdown-body h2 {
+      margin-top: 10em;
+      margin-bottom: 3.2em;
+      padding-bottom: 0.4em;
+      border-bottom: 1px solid #eaecef;
+    }
+
+    .markdown-body h3 {
+      margin-top: 8em;
+      margin-bottom: 2.4em;
+    }
+
+    .markdown-body h4 {
+      margin-top: 7.2em;
+      margin-bottom: 2em;
+    }
+
+    .markdown-body h5 {
+      margin-top: 6em;
+      margin-bottom: 1.6em;
+    }
+
+    .markdown-body h6 {
+      margin-top: 4.8em;
+      margin-bottom: 1.2em;
+    }
+
+    /* 深色模式下的标题边框颜色 */
+    .dark-mode .markdown-body h1,
+    .dark-mode .markdown-body h2 {
+      border-bottom-color: #30363d;
     }
   </style>
   <!-- 添加辅助处理SVG的脚本 -->
