@@ -3,7 +3,6 @@ import { bitable } from '@lark-base-open/js-sdk';
 import 'github-markdown-css/github-markdown.css';
 import MarkdownRenderer from './utils/MarkdownRenderer';
 import { testMarkdown } from './test-markdown';
-import ReactDOM from 'react-dom';
 import './App.css';
 import mermaid from 'mermaid';
 import MarkdownField from './MarkdownField';
@@ -40,32 +39,6 @@ const themes = {
     preBackground: '#f7f6f3'
   }
 };
-
-// 深色主题风格映射
-const darkThemes = {
-  notionLight: {
-    backgroundColor: '#2f3437',
-    color: '#e6e6e6',
-    borderColor: '#4d4d4d',
-    buttonBgColor: '#454545',
-    buttonHoverBgColor: '#5a5a5a',
-    buttonTextColor: '#e6e6e6',
-    inputBgColor: '#454545',
-    inputBorderColor: '#5a5a5a',
-    inputTextColor: '#e6e6e6',
-  },
-  notionStyle: {
-    backgroundColor: '#2f3437',
-    color: '#e6e6e6',
-    borderColor: '#4d4d4d',
-    buttonBgColor: '#454545',
-    buttonHoverBgColor: '#5a5a5a',
-    buttonTextColor: '#e6e6e6',
-    inputBgColor: '#454545',
-    inputBorderColor: '#5a5a5a',
-    inputTextColor: '#e6e6e6',
-  }
-}
 
 // 添加全局样式
 const globalStyles = `
@@ -738,14 +711,11 @@ const App: React.FC = () => {
   
   // 处理Mermaid图表
   const processMermaidDiagrams = (containerEl: HTMLElement, forClipboard: boolean = false): void => {
-    // 寻找所有Mermaid容器
     const mermaidWrappers = containerEl.querySelectorAll('.mermaid-wrapper, .mermaid-container');
     
     mermaidWrappers.forEach(wrapper => {
-      const mermaidElement = wrapper.querySelector('.mermaid');
       const svgElement = wrapper.querySelector('svg');
       
-      // 如果是为剪贴板准备的内容，保留并增强SVG，确保能够复制图表
       if (forClipboard && svgElement) {
         // 不做任何替换，保留原始SVG内容以便复制
         console.log('剪贴板模式：保留并增强SVG图表');

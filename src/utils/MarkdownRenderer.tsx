@@ -103,13 +103,13 @@ const normalizeOrderedLists = (markdown: string): string => {
     // 确保连续的有序列表项之间不会有多余的空行
     result = result.replace(
       /^(\s*)(\d+)\.(\s+)(.+)(\n+)(\s*)(\d+)\.(\s+)/gm,
-      (match, space1, num1, _sep1, content, newlines, space2, num2) => {
+      (_match, space1, num1, _sep1, content, newlines, space2, num2) => {
         try {
           const safeNewlines = typeof newlines === 'string' && newlines.length > 1 ? '\n' : newlines;
           return `${space1}${num1}. ${content}${safeNewlines}${space2}${num2}. `;
         } catch (e) {
           console.error('列表间距处理错误:', e);
-          return match;
+          return _match;
         }
       }
     );

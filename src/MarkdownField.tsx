@@ -43,7 +43,7 @@ export class MarkdownFieldExtension {
 
 interface MarkdownFieldProps {
   initialValue?: string;
-  onSave?: (value: string) => void;
+  onSave?: (content: string) => void;
 }
 
 const MarkdownField: React.FC<MarkdownFieldProps> = ({ 
