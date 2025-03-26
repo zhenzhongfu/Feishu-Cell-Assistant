@@ -20,30 +20,32 @@
 - 链接和图片
 - 表格
 - 任务列表
-
-## 安装方法
-
-1. 下载本项目代码
-2. 在飞书开发者后台创建应用
-3. 上传插件代码
-4. 在多维表格中添加自定义字段类型
-
-## 使用方法
-
-1. 在多维表格中创建新列
-2. 选择"Markdown 编辑器"字段类型
-3. 点击单元格中的"编辑"按钮
-4. 在编辑器中输入 Markdown 文本
-5. 点击"编辑"按钮切换预览模式
+- Mermaid图表
+- 数学公式（KaTeX）
 
 ## 开发说明
 
 本插件使用以下技术：
 
 - 飞书多维表格插件 SDK
+- React 用于构建UI组件
 - marked.js（用于 Markdown 转换）
-- 原生 JavaScript
-- CSS Flexbox 布局
+- KaTeX（用于数学公式渲染）
+- Mermaid（用于图表渲染）
+- Prism（用于代码高亮）
+
+## 开发命令
+
+```bash
+# 安装依赖
+npm install
+
+# 开发模式
+npm run dev
+
+# 构建扩展
+npm run build
+```
 
 ## 注意事项
 
@@ -55,6 +57,29 @@
 
 - [ ] 工具栏快捷按钮
 - [ ] 自定义主题
-- [ ] 图片上传功能
-- [ ] 表格编辑器
-- [ ] 快捷键支持 
+
+## 许可证
+
+MIT 
+
+## 最近更新
+
+### 2025年3月更新 - 模块化重构
+我们对项目进行了全面的模块化重构，以提高代码的可维护性和扩展性：
+
+1. **模块化设计**：将Markdown处理逻辑拆分为多个专注的模块
+   - `/formatters` - 处理文本格式化的函数
+   - `/components` - React组件用于UI渲染
+   - `/helpers` - 辅助函数和工具
+
+2. **改进的组件系统**：
+   - `MarkdownRenderer` - 核心渲染组件
+   - `CodeBlock` - 代码块高亮组件
+   - `MathRenderer` - 数学公式渲染
+   - `MermaidRenderer` - 图表渲染
+   - `ImageRenderer` - 增强的图片处理
+
+3. **统一的导出API**：通过索引文件提供简洁的导入方式
+   ```typescript
+   import { MarkdownRenderer, preprocessMarkdown } from './utils/markdown';
+   ```

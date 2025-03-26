@@ -1,9 +1,27 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import path from 'path';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react({
+      jsxRuntime: 'automatic',
+      babel: {
+        plugins: [
+          ['@babel/plugin-transform-react-jsx', { runtime: 'automatic' }]
+        ]
+      }
+    })
+  ],
   base: './',
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src')
+    }
+  },
+  esbuild: {
+    jsx: 'automatic'
+  },
   build: {
     outDir: 'dist',
     sourcemap: process.env.NODE_ENV === 'development',
@@ -19,7 +37,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom'],
-          'markdown-vendor': ['react-markdown', 'github-markdown-css']
+          'markdown-vendor': ['marked', 'dompurify']
         }
       }
     }

@@ -1,1309 +1,382 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { bitable } from '@lark-base-open/js-sdk';
-import 'github-markdown-css/github-markdown.css';
-import MarkdownRenderer from './utils/MarkdownRenderer';
-import { testMarkdown } from './test-markdown';
-import './App.css';
-import mermaid from 'mermaid';
-// import MarkdownField from './MarkdownField';
+import { formatMarkdown } from './utils/markdown/formatters';
+import SplitEditor from './components/SplitEditor';
+import { isInBitableEnvironment, getCellValue, setCellValue } from './utils/bitable';
+import ScrollToTop from './components/ScrollToTop';
 
-// 定义主题样式
-const themes = {
-  notionLight: {
-    name: 'GitHub 风格',
-    containerStyle: {
-      backgroundColor: '#ffffff',
-      color: '#24292e'
-    },
-    preStyle: {
-      backgroundColor: '#f6f8fa',
-      borderRadius: '6px',
-      padding: '16px',
-      border: '1px solid #d0d7de'
-    },
-    markdownClass: 'markdown-body github-markdown-light',
-    preBackground: '#f6f8fa'
-  },
-  notionStyle: {
-    name: 'Notion 风格',
-    containerStyle: {
-      backgroundColor: '#ffffff',
-      color: '#37352f'
-    },
-    preStyle: {
-      backgroundColor: '#f7f6f3',
-      borderRadius: '3px',
-      padding: '16px'
-    },
-    markdownClass: 'markdown-body notion-style',
-    preBackground: '#f7f6f3'
-  }
-};
+// 示例Markdown内容
+const exampleMarkdown = `# Markdown单元格助手
 
-// 添加全局样式
-const globalStyles = `
-/* 基本样式 */
-.markdown-body {
-  color-scheme: light dark;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
-  font-size: 16px;
-  line-height: 1.5;
-  word-wrap: break-word;
+## 基本语法示例
+
+### 文本格式化
+
+这是**粗体**文本，这是*斜体*文本，这是~~删除线~~文本。
+
+### 列表
+
+无序列表:
+- 项目1
+- 项目2
+- 项目3
+
+有序列表:
+1. 第一项
+2. 第二项
+3. 第三项
+
+### 引用
+
+> 这是一段引用文本
+> 多行引用
+
+### 代码
+
+行内代码 \`console.log('Hello world')\`
+
+代码块:
+\`\`\`javascript
+function sayHello() {
+  console.log('Hello, world!');
 }
+\`\`\`
 
-.github-markdown-light {
-  color: #24292e;
-  background-color: transparent;
-}
+### 表格
 
-.notion-style {
-  color: #37352f;
-  background-color: transparent;
-  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji";
-  letter-spacing: -0.02em;
-}
+| 表头1 | 表头2 | 表头3 |
+| ----- | ----- | ----- |
+| 单元格1 | 单元格2 | 单元格3 |
+| 单元格4 | 单元格5 | 单元格6 |
 
-/* Notion 风格标题 */
-.notion-style h1 {
-  font-weight: 600;
-  font-size: 1.875em;
-  line-height: 1.3;
-  color: rgb(55, 53, 47);
-  margin-top: 2em;
-  margin-bottom: 0.5em;
-}
+### 链接和图片
 
-.notion-style h2 {
-  font-weight: 600;
-  font-size: 1.5em;
-  line-height: 1.3;
-  color: rgb(55, 53, 47);
-  margin-top: 1.4em;
-  margin-bottom: 0.5em;
-}
+[链接示例](https://example.com)
 
-.notion-style h3 {
-  font-weight: 600;
-  font-size: 1.25em;
-  line-height: 1.3;
-  color: rgb(55, 53, 47);
-  margin-top: 1.4em;
-  margin-bottom: 0.5em;
-}
-
-/* Notion 风格段落和列表 */
-.notion-style p {
-  margin-top: 0.5em;
-  margin-bottom: 0.5em;
-  min-height: 1.5em;
-  padding: 3px 2px;
-}
-
-.notion-style ul, .notion-style ol {
-  margin: 0.5em 0;
-  padding-left: 1.2em;
-}
-
-.notion-style li {
-  padding: 3px 2px;
-  min-height: 1.5em;
-}
-
-/* Notion 风格引用块 */
-.notion-style blockquote {
-  padding: 0.2em 0.9em;
-  margin: 0.5em 0;
-  font-size: 1em;
-  border-left: 3px solid rgba(55, 53, 47, 0.16);
-  color: rgb(120, 119, 116);
-}
-
-/* Notion 风格代码块 */
-.notion-style pre {
-  background: rgba(247, 246, 243, 0.7);
-  border-radius: 6px;
-  margin: 0.5em 0;
-  overflow: hidden;
-  font-family: SFMono-Regular, Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace;
-  font-size: 0.9em;
-  line-height: 1.5;
-  border: 1px solid rgba(55, 53, 47, 0.16);
-}
-
-/* 代码块容器 */
-.notion-style .markdown-code-wrapper {
-  position: relative;
-  margin: 1em 0;
-}
-
-/* 代码块头部 */
-.notion-style .markdown-code-header {
-  display: flex;
-  align-items: center;
-  padding: 8px 16px;
-  background-color: #f6f8fa;
-  border-bottom: 1px solid rgba(55, 53, 47, 0.16);
-  border-top-left-radius: 6px;
-  border-top-right-radius: 6px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  font-size: 12px;
-  color: #57606a;
-}
-
-/* Mac 风格按钮容器 */
-.notion-style .mac-buttons {
-  display: flex;
-  gap: 6px;
-  margin-right: 12px;
-}
-
-/* Mac 风格按钮 */
-.notion-style .mac-button {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: none;
-}
-
-/* 红色关闭按钮 */
-.notion-style .mac-button.close {
-  background-color: #ff5f56;
-}
-
-/* 黄色最小化按钮 */
-.notion-style .mac-button.minimize {
-  background-color: #ffbd2e;
-}
-
-/* 绿色最大化按钮 */
-.notion-style .mac-button.maximize {
-  background-color: #27c93f;
-}
-
-/* 代码语言标签 */
-.notion-style .markdown-code-lang {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 12px;
-  color: #57606a;
-  margin-left: auto;
-}
-
-/* 代码内容容器 */
-.notion-style .markdown-code-content {
-  padding: 16px;
-  margin: 0;
-  overflow-x: auto;
-}
-
-/* GitHub 风格代码块 */
-.github-markdown-light pre {
-  background-color: #f6f8fa;
-  border-radius: 6px;
-  padding: 16px;
-  overflow: auto;
-  font-size: 85%;
-  line-height: 1.45;
-  border: 1px solid #d0d7de;
-}
-
-.github-markdown-light .markdown-code-wrapper {
-  position: relative;
-  margin: 1em 0;
-}
-
-.github-markdown-light .markdown-code-header {
-  display: flex;
-  align-items: center;
-  padding: 8px 16px;
-  background-color: #f6f8fa;
-  border-bottom: 1px solid #d0d7de;
-  border-top-left-radius: 6px;
-  border-top-right-radius: 6px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  font-size: 12px;
-  color: #57606a;
-}
-
-.github-markdown-light .mac-buttons {
-  display: flex;
-  gap: 6px;
-  margin-right: 12px;
-}
-
-.github-markdown-light .mac-button {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: none;
-}
-
-.github-markdown-light .mac-button.close {
-  background-color: #ff5f56;
-}
-
-.github-markdown-light .mac-button.minimize {
-  background-color: #ffbd2e;
-}
-
-.github-markdown-light .mac-button.maximize {
-  background-color: #27c93f;
-}
-
-.github-markdown-light .markdown-code-lang {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 12px;
-  color: #57606a;
-  margin-left: auto;
-}
-
-.github-markdown-light .markdown-code-content {
-  padding: 16px;
-  margin: 0;
-  overflow-x: auto;
-}
-
-.notion-style code {
-  font-family: SFMono-Regular, Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace;
-  font-size: 0.9em;
-  padding: 0.2em 0.4em;
-  background: rgba(135, 131, 120, 0.15);
-  border-radius: 3px;
-  color: #eb5757;
-}
-
-/* Notion 风格表格 */
-.notion-style table {
-  border-collapse: collapse;
-  width: 100%;
-  margin: 1em 0;
-}
-
-.notion-style th, .notion-style td {
-  border: 1px solid rgba(55, 53, 47, 0.16);
-  padding: 0.5em;
-  color: rgb(55, 53, 47);
-}
-
-.notion-style th {
-  font-weight: 600;
-  background: rgba(247, 246, 243, 0.7);
-}
-
-/* Notion 风格链接 */
-.notion-style a {
-  color: rgb(35, 131, 226);
-  text-decoration: underline;
-  text-decoration-color: rgba(35, 131, 226, 0.4);
-  transition: all 0.1s ease-in;
-}
-
-.notion-style a:hover {
-  text-decoration-color: rgb(35, 131, 226);
-}
-
-/* Notion 风格分割线 */
-.notion-style hr {
-  border: none;
-  border-top: 1px solid rgba(55, 53, 47, 0.16);
-  margin: 2em 0;
-}
-
-/* Notion 风格图片 */
-.notion-style img {
-  max-width: 100%;
-  border-radius: 3px;
-  margin: 0.5em 0;
-}
-
-/* Notion 风格复选框 */
-.notion-style input[type="checkbox"] {
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgb(55, 53, 47);
-  border-radius: 3px;
-  margin-right: 8px;
-  position: relative;
-  cursor: pointer;
-}
-
-.notion-style input[type="checkbox"]:checked {
-  background-color: rgb(35, 131, 226);
-  border-color: rgb(35, 131, 226);
-}
-
-.notion-style input[type="checkbox"]:checked::after {
-  content: "";
-  position: absolute;
-  left: 4px;
-  top: 1px;
-  width: 4px;
-  height: 8px;
-  border: solid white;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-}
+![图片示例](https://via.placeholder.com/150)
 `;
 
-// 定义主题模式类型
-enum ThemeModeType {
-  Light = 'light',
-  Dark = 'dark'
+// 添加防抖函数
+function debounce<T extends (...args: any[]) => void>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout | null = null;
+  
+  return (...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      func(...args);
+    }, wait);
+  };
 }
 
-// 添加更完整的LaTeX到ASCII/Unicode的映射函数
-const convertLatexToUnicode = (texCode: string): string => {
-  // 常见的LaTeX符号及其Unicode或ASCII表示
-  const replacements: [RegExp, string][] = [
-    // 希腊字母
-    [/\\alpha/g, 'α'], [/\\beta/g, 'β'], [/\\gamma/g, 'γ'], [/\\delta/g, 'δ'],
-    [/\\epsilon/g, 'ε'], [/\\zeta/g, 'ζ'], [/\\eta/g, 'η'], [/\\theta/g, 'θ'],
-    [/\\iota/g, 'ι'], [/\\kappa/g, 'κ'], [/\\lambda/g, 'λ'], [/\\mu/g, 'μ'],
-    [/\\nu/g, 'ν'], [/\\xi/g, 'ξ'], [/\\pi/g, 'π'], [/\\rho/g, 'ρ'],
-    [/\\sigma/g, 'σ'], [/\\tau/g, 'τ'], [/\\upsilon/g, 'υ'], [/\\phi/g, 'φ'],
-    [/\\chi/g, 'χ'], [/\\psi/g, 'ψ'], [/\\omega/g, 'ω'],
-    [/\\Gamma/g, 'Γ'], [/\\Delta/g, 'Δ'], [/\\Theta/g, 'Θ'], [/\\Lambda/g, 'Λ'],
-    [/\\Xi/g, 'Ξ'], [/\\Pi/g, 'Π'], [/\\Sigma/g, 'Σ'], [/\\Phi/g, 'Φ'],
-    [/\\Psi/g, 'Ψ'], [/\\Omega/g, 'Ω'],
-    
-    // 数学运算符
-    [/\\times/g, '×'], [/\\div/g, '÷'], [/\\pm/g, '±'], [/\\mp/g, '∓'],
-    [/\\cdot/g, '·'], [/\\cdots/g, '⋯'], [/\\ldots/g, '...'],
-    [/\\leq/g, '≤'], [/\\geq/g, '≥'], [/\\neq/g, '≠'], [/\\approx/g, '≈'],
-    [/\\equiv/g, '≡'], [/\\cong/g, '≅'], [/\\sim/g, '∼'],
-    
-    // 集合和逻辑
-    [/\\in/g, '∈'], [/\\notin/g, '∉'], [/\\subset/g, '⊂'], [/\\supset/g, '⊃'],
-    [/\\subseteq/g, '⊆'], [/\\supseteq/g, '⊇'], [/\\cup/g, '∪'], [/\\cap/g, '∩'],
-    [/\\emptyset/g, '∅'], [/\\varnothing/g, '∅'],
-    [/\\forall/g, '∀'], [/\\exists/g, '∃'], [/\\neg/g, '¬'],
-    [/\\lor/g, '∨'], [/\\land/g, '∧'], [/\\Rightarrow/g, '⇒'], [/\\Leftarrow/g, '⇐'],
-    [/\\Leftrightarrow/g, '⇔'], [/\\rightarrow/g, '→'], [/\\leftarrow/g, '←'],
-    [/\\leftrightarrow/g, '↔'],
-    
-    // 微积分和分析
-    [/\\infty/g, '∞'], [/\\partial/g, '∂'], [/\\nabla/g, '∇'],
-    [/\\sum/g, '∑'], [/\\prod/g, '∏'], [/\\int/g, '∫'], [/\\oint/g, '∮'],
-    
-    // 括号和其他符号
-    [/\\{/g, '{'], [/\\}/g, '}'], [/\\|/g, '|'],
-    [/\\langle/g, '⟨'], [/\\rangle/g, '⟩'],
-    [/\\lfloor/g, '⌊'], [/\\rfloor/g, '⌋'], [/\\lceil/g, '⌈'], [/\\rceil/g, '⌉'],
-    
-    // 分数和上下标
-    [/\\frac\{([^{}]*)\}\{([^{}]*)\}/g, '$1/$2'], // 简单分数转换
-    
-    // 空格和换行
-    [/\\\\/g, '\n'], [/\\quad/g, '    '], [/\\qquad/g, '        '],
-    
-    // 括号转换
-    [/\\left\(/g, '('], [/\\right\)/g, ')'],
-    [/\\left\[/g, '['], [/\\right\]/g, ']'],
-    [/\\left\\{/g, '{'], [/\\right\\}/g, '}'],
-    
-    // 删除不支持的指令
-    [/\\text\{([^{}]*)\}/g, '$1'], // 文本指令
-    [/\\mathrm\{([^{}]*)\}/g, '$1'], // mathrm指令
-    [/\\mathbf\{([^{}]*)\}/g, '$1'], // mathbf指令
-    [/\\mathit\{([^{}]*)\}/g, '$1'], // mathit指令
-    
-    // 上标和下标
-    [/\^(\d)/g, '^$1'], // 简单上标
-    [/_(\d)/g, '_$1'], // 简单下标
-    [/\^\{([^{}]*)\}/g, '^($1)'], // 复杂上标
-    [/_\{([^{}]*)\}/g, '_($1)'], // 复杂下标
-    
-    // 清理剩余的命令
-    [/\\[a-zA-Z]+/g, '?'] // 未知命令替换为问号
-  ];
-  
-  // 应用所有替换
-  let result = texCode;
-  for (const [pattern, replacement] of replacements) {
-    result = result.replace(pattern, replacement);
-  }
-  
-  // 清理连续的空格
-  result = result.replace(/\s+/g, ' ').trim();
-  
-  return result;
-};
-
 const App: React.FC = () => {
-  const [content, setContent] = useState<string>(testMarkdown);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>('');
-  const [currentTheme, setCurrentTheme] = useState<keyof typeof themes>('notionLight');
-  const [copySuccess, setCopySuccess] = useState<boolean>(false);
-  const formattedContentRef = useRef<HTMLDivElement>(null);
-  const [bitableTheme, setBitableTheme] = useState<ThemeModeType>(ThemeModeType.Light);
-  const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [showFormatted, setShowFormatted] = useState<boolean>(false);
-
-  // 处理单元格值的函数，确保文本正确显示
-  const processCellValue = (value: any): string => {
-    // 创建HTML实体解码器
-    const decodeHTML = (html: string) => {
-      const textarea = document.createElement('textarea');
-      textarea.innerHTML = html;
-      return textarea.value;
-    };
-
-    // 处理不同类型的值
-    if (!value) return '';
-    let processedValue = '';
-    
-    if (typeof value === 'string') {
-      processedValue = value;
-    } else if (typeof value === 'object' && Array.isArray(value)) {
-      processedValue = value.map(item => {
-        if (item && typeof item === 'object' && item.text) {
-          return item.text;
-        }
-        return '';
-      }).join('');
-    } else if (typeof value === 'object') {
-      if (value.text) processedValue = value.text;
-      else if (value.value) processedValue = value.value;
-      else processedValue = JSON.stringify(value, null, 2);
-    } else {
-      processedValue = String(value);
-    }
-
-    // 先解码HTML实体
-    const decodedValue = decodeHTML(processedValue);
-    
-    // 步骤1: 保护行内代码块
-    const protectedCode = new Map<string, string>();
-    let codeBlockId = 0;
-    
-    let processed = decodedValue.replace(/`([^`]+)`/g, (match, _) => {
-      const placeholder = `__INLINE_CODE_${codeBlockId++}__`;
-      protectedCode.set(placeholder, match);
-      return placeholder;
-    });
-    
-    // 步骤2: 保护GitHub风格的警告提示语法
-    processed = processed.replace(/\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\](.*?)(?=\n\[!|\n\n|$)/gs, (match) => {
-      return `__GITHUB_ALERT__${match}__GITHUB_ALERT__`;
-    });
-    
-    // 步骤3: 保护图片语法
-    processed = processed.replace(/!\[(.*?)\]\((.*?)\)/g, (_, alt, url) => {
-      return `__IMG_MD__${alt}__IMG_URL__${url}__IMG_END__`;
-    });
-    
-    // 步骤4: 保护链接语法 [文本](URL) - 不再转换为HTML
-    processed = processed.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match) => {
-      return `__LINK_MD__${match}__LINK_END__`;
-    });
-    
-    // 步骤5: 恢复图片语法
-    processed = processed.replace(/__IMG_MD__(.*?)__IMG_URL__(.*?)__IMG_END__/g, (_, alt, url) => {
-      return `![${alt}](${url})`;
-    });
-    
-    // 步骤6: 恢复链接语法
-    processed = processed.replace(/__LINK_MD__(.*?)__LINK_END__/g, (_, linkContent) => {
-      return linkContent;
-    });
-    
-    // 步骤7: 恢复GitHub警告提示语法
-    processed = processed.replace(/__GITHUB_ALERT__(.*?)__GITHUB_ALERT__/gs, (_, alertContent) => {
-      return alertContent;
-    });
-    
-    // 步骤8: 处理无序列表项
-    processed = processed.replace(/^[-*]\s+(.*)/gm, (_match, content) => {
-      return `• ${content}`;
-    });
-    
-    // 步骤9: 处理有序列表项
-    processed = processed.replace(/^\d+\.\s+(.*)/gm, (match) => {
-      return match;
-    });
-    
-    // 最后: 恢复所有行内代码
-    for (const [placeholder, original] of protectedCode.entries()) {
-      processed = processed.replace(placeholder, original);
-    }
-    
-    return processed;
-  };
-
-  // 处理HTML，确保嵌套引用能够正确显示
-  // const processNestedQuotes = (html: string): string => {
-  //   // 使用正则表达式找到嵌套的引用
-  //   return html.replace(
-  //     /<blockquote[^>]*>(?:(?!<\/blockquote>)[\s\S])*?<blockquote[^>]*>([\s\S]*?)<\/blockquote>[\s\S]*?<\/blockquote>/g,
-  //     (match) => {
-  //       // 将嵌套引用用特殊标记替换
-  //       return match.replace(
-  //         /<blockquote([^>]*)>([\s\S]*?)(?=<\/blockquote>)/g, 
-  //         (_m, attrs, content) => {
-  //           // 给内部blockquote添加特殊标记
-  //           if (content.includes('<blockquote')) {
-  //             return `<blockquote${attrs} data-nested="true" style="padding:0 1em !important;color:#6a737d !important;border-left:0.25em solid #dfe2e5 !important;margin:8px 0 !important;display:block !important"><div class="nested-quote-marker" style="font-weight:bold;color:#6a737d;margin-bottom:4px">引用：</div>${content}`;
-  //           }
-  //           return `<blockquote${attrs}>${content}`;
-  //         }
-  //       );
-  //     }
-  //   );
-  // };
-
-  // 引用块处理
-  const processBlockquotes = (containerEl: HTMLElement): void => {
-    // 获取所有引用块
-    const blockquotes = containerEl.querySelectorAll('blockquote');
-    
-    blockquotes.forEach(blockquote => {
-      // 设置明确的样式，防止公众号丢失样式
-      blockquote.setAttribute('style', 
-        'padding: 0 1em !important; color: #6a737d !important; border-left: 0.25em solid #dfe2e5 !important; margin: 0 0 16px 0 !important; display: block !important; quotes: none !important;');
-      
-      // 检查是否有嵌套引用
-      const isNested = blockquote.parentElement && blockquote.parentElement.nodeName.toLowerCase() === 'blockquote';
-      
-      if (isNested) {
-        // 嵌套引用特殊处理
-        blockquote.setAttribute('style', 
-          'padding: 0 1em !important; color: #6a737d !important; border-left: 0.25em solid #dfe2e5 !important; margin: 8px 0 !important; display: block !important; quotes: none !important;');
-        
-        // 在第一个段落前添加"引用："前缀
-        const firstP = blockquote.querySelector('p');
-        if (firstP) {
-          const originalContent = firstP.innerHTML;
-          firstP.innerHTML = `<strong style="color: #6a737d !important;">引用：</strong> ${originalContent}`;
-        }
-        
-        // 将嵌套引用用div包裹，避免公众号过度处理
-        const wrapper = document.createElement('div');
-        wrapper.setAttribute('style', 'margin: 8px 0 !important; display: block !important;');
-        wrapper.setAttribute('data-type', 'nested-quote');
-        
-        // 将嵌套引用移到新的div中
-        const parent = blockquote.parentNode;
-        if (parent) {
-          parent.insertBefore(wrapper, blockquote);
-          wrapper.appendChild(blockquote);
-        }
-      }
-    });
-  };
+  const [content, setContent] = useState(exampleMarkdown);
+  const [formatStatus, setFormatStatus] = useState<null | 'success' | 'error'>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [recordId, setRecordId] = useState<string | undefined>();
+  const [fieldId, setFieldId] = useState<string | undefined>();
+  const [isBitable, setIsBitable] = useState(false);
   
-  // 数学公式处理
-  const processMathFormulas = (containerEl: HTMLElement): void => {
-    // 寻找所有块级公式
-    const katexDisplayElements = containerEl.querySelectorAll('.katex-display');
-    
-    katexDisplayElements.forEach((formula: Element) => {
-      try {
-        // 提取原始TeX代码
-        const texAnnotation = formula.querySelector('.katex-html annotation[encoding="application/x-tex"]');
-        if (!texAnnotation) return;
-        
-        const texCode = texAnnotation.textContent || '';
-        if (!texCode) return;
-        
-        // 检查是否是对齐环境公式
-        const alignedMatch = texCode.match(/\\begin\{aligned\}([\s\S]*?)\\end\{aligned\}/);
-        if (alignedMatch) {
-          const alignedContent = alignedMatch[1];
-          // 按行分割
-          const lines: string[] = alignedContent.split('\\\\').map((lineStr: string) => lineStr.trim());
-          
-          // 创建纯文本公式块 - 使用pre元素保持格式
-          const preElement = document.createElement('pre');
-          preElement.className = 'plain-text-formula';
-          preElement.setAttribute('style', 'display:block;text-align:center;margin:1em 0;font-family:monospace;white-space:pre;background-color:#f8f8f8;padding:10px;border-radius:5px;');
-          
-          // 构建纯文本表示
-          let textFormula = '【公式】\n';
-          
-          lines.forEach((lineStr: string) => {
-            // 处理对齐符号&
-            const parts = lineStr.split('&');
-            if (parts.length > 1) {
-              // 左侧部分（右对齐）并替换常见数学符号为Unicode表示
-              let leftPart = convertLatexToUnicode(parts[0].trim());
-              
-              // 右侧部分（左对齐）并应用同样的替换
-              let rightPart = convertLatexToUnicode(parts[1].trim());
-              
-              // 构建均衡的纯文本表示，使用空格对齐
-              const padLength = 20; // 左侧最大长度
-              const paddedLeft = leftPart.padStart(padLength, ' ');
-              textFormula += `${paddedLeft} ${rightPart}\n`;
-            } else {
-              // 单列内容（居中）
-              let plainText = convertLatexToUnicode(lineStr.trim());
-              textFormula += `          ${plainText}\n`;
-            }
-          });
-          
-          textFormula += '【公式结束】';
-          
-          // 设置纯文本内容
-          preElement.textContent = textFormula;
-          
-          // 替换原始公式
-          const parentElement = formula.parentElement;
-          if (parentElement) {
-            parentElement.replaceChild(preElement, formula);
-          }
-        } else {
-          // 非对齐环境，使用简单的纯文本表示
-          const preElement = document.createElement('pre');
-          preElement.className = 'plain-text-formula';
-          preElement.setAttribute('style', 'display:block;text-align:center;margin:1em 0;font-family:monospace;white-space:pre;background-color:#f8f8f8;padding:10px;border-radius:5px;');
-          
-          // 使用转换函数处理LaTeX代码
-          let plainText = convertLatexToUnicode(texCode);
-          
-          preElement.textContent = `【公式】\n${plainText}\n【公式结束】`;
-          
-          // 替换原始公式
-          const parentElement = formula.parentElement;
-          if (parentElement) {
-            parentElement.replaceChild(preElement, formula);
-          }
-        }
-      } catch (error) {
-        console.error('处理数学公式出错:', error);
-        // 保留原始内容
-      }
-    });
-    
-    // 处理行内公式
-    const katexInlineElements = containerEl.querySelectorAll('.katex:not(.katex-display .katex)');
-    
-    katexInlineElements.forEach((formula: Element) => {
-      try {
-        // 提取原始TeX代码
-        const texAnnotation = formula.querySelector('annotation[encoding="application/x-tex"]');
-        if (!texAnnotation) return;
-        
-        const texCode = texAnnotation.textContent || '';
-        if (!texCode) return;
-        
-        // 创建简化的行内公式 - 使用纯文本
-        const inlineText = document.createElement('span');
-        inlineText.className = 'plain-text-inline-formula';
-        inlineText.setAttribute('style', 'font-family:monospace;white-space:nowrap;background-color:#f8f8f8;padding:0 3px;border-radius:2px;');
-        
-        // 使用转换函数处理LaTeX代码
-        let plainText = convertLatexToUnicode(texCode);
-        
-        inlineText.textContent = `【${plainText}】`;
-        
-        // 替换原始公式
-        const parentElement = formula.parentElement;
-        if (parentElement) {
-          parentElement.replaceChild(inlineText, formula);
-        }
-      } catch (error) {
-        console.error('处理行内公式出错:', error);
-        // 保留原始内容
-      }
-    });
-  };
-  
-  // 处理Mermaid图表
-  const processMermaidDiagrams = (containerEl: HTMLElement, forClipboard: boolean = false): void => {
-    const mermaidWrappers = containerEl.querySelectorAll('.mermaid-wrapper, .mermaid-container');
-    
-    mermaidWrappers.forEach(wrapper => {
-      const svgElement = wrapper.querySelector('svg');
-      
-      if (forClipboard && svgElement) {
-        // 不做任何替换，保留原始SVG内容以便复制
-        console.log('剪贴板模式：保留并增强SVG图表');
-        // 为复制到剪贴板优化SVG元素
-        try {
-          // 获取SVG的实际尺寸
-          const bbox = svgElement.getBBox();
-          const width = svgElement.getAttribute('width') || bbox.width.toString();
-          const height = svgElement.getAttribute('height') || bbox.height.toString();
-          
-          // 设置SVG尺寸，确保使用有效的数值
-          svgElement.setAttribute('width', width);
-          // 只有在有有效高度值时才设置height
-          if (height && height !== 'auto') {
-            svgElement.setAttribute('height', height);
-          } else {
-            // 如果没有有效的高度，使用宽度的一半作为默认高度
-            const defaultHeight = parseFloat(width) * 0.5;
-            svgElement.setAttribute('height', `${defaultHeight}px`);
-          }
-          
-          // 使用CSS样式控制响应式布局
-          const svgStyle = (svgElement as unknown as SVGElement).style;
-          svgStyle.maxWidth = '100%';
-          svgStyle.width = '100%';
-          svgStyle.height = '100%';
-          svgStyle.display = 'block';
-          svgStyle.overflow = 'visible';
-          
-          // 添加特殊类名，标记为剪贴板准备的SVG
-          svgElement.classList.add('clipboard-svg-ready');
-          
-          // 确保SVG容器也有正确的样式
-          const parentStyle = (wrapper as HTMLElement).style;
-          parentStyle.display = 'block';
-          parentStyle.width = '100%';
-          parentStyle.maxWidth = '100%';
-          parentStyle.overflow = 'visible';
-        } catch (e) {
-          console.error('为剪贴板优化SVG失败:', e);
-        }
-        return;
-      }
-    });
-  };
-
-  // 准备要复制的格式化内容
-  const prepareFormattedContent = (): string => {
-    // 创建临时容器
-    const container = document.createElement('div');
-    container.className = 'mp-content';
-    
-    // 获取格式化内容
-    if (formattedContentRef.current) {
-      container.innerHTML = formattedContentRef.current.innerHTML;
-      
-      // 处理各种特殊内容
-      processBlockquotes(container);
-      processMathFormulas(container);
-      processMermaidDiagrams(container, true); // 为剪贴板准备内容
-      
-      // 处理代码块的样式
-      const codeBlocks = container.querySelectorAll('.markdown-code-wrapper');
-      codeBlocks.forEach(block => {
-        const header = block.querySelector('.markdown-code-header');
-        const content = block.querySelector('.markdown-code-content');
-        if (header && content) {
-          // 确保代码块样式正确
-          (block as HTMLElement).style.margin = '16px 0';
-          (block as HTMLElement).style.borderRadius = '8px';
-          (block as HTMLElement).style.overflow = 'hidden';
-          (header as HTMLElement).style.padding = '12px 16px';
-          (content as HTMLElement).style.margin = '0';
-          (content as HTMLElement).style.padding = '16px';
-        }
-      });
-    }
-    
-    return container.innerHTML;
-  };
-
-  // 复制内容到剪贴板
-  const copyToClipboard = (content: string, isFormatted: boolean = false) => {
-    try {
-      if (isFormatted) {
-        // 创建临时容器并设置内容
-        const container = document.createElement('div');
-        container.innerHTML = content;
-        document.body.appendChild(container);
-        
-        // 创建选区
-        const range = document.createRange();
-        range.selectNodeContents(container);
-        
-        const selection = window.getSelection();
-        if (selection) {
-          selection.removeAllRanges();
-          selection.addRange(range);
-          
-          // 执行复制
-          document.execCommand('copy');
-          
-          // 清理
-          selection.removeAllRanges();
-          document.body.removeChild(container);
-        }
-      } else {
-        // 纯文本复制
-        const textarea = document.createElement('textarea');
-        textarea.value = content;
-        textarea.style.position = 'fixed';
-        textarea.style.left = '-9999px';
-        textarea.style.top = '0';
-        document.body.appendChild(textarea);
-        textarea.select();
-        textarea.setSelectionRange(0, 99999);
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-      }
-      
-      // 更新复制成功状态
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000);
-    } catch (err) {
-      console.error('复制失败:', err);
-      setError('复制失败，请重试');
-    }
-  };
-
-  // 处理复制按钮点击事件
-  const handleCopyClick = () => {
-    if (isEditing) {
-      // 编辑模式下，复制排版后的内容
-      const formattedContent = prepareFormattedContent();
-      copyToClipboard(formattedContent, true);
-    } else {
-      // 非编辑模式
-      if (showFormatted) {
-        // 显示排版时，复制排版后的内容
-        const formattedContent = prepareFormattedContent();
-        copyToClipboard(formattedContent, true);
-      } else {
-        // 显示原文时，复制原始markdown
-        copyToClipboard(content);
-      }
-    }
-  };
-
-  // 初始化插件
+  // 从localStorage加载内容
   useEffect(() => {
-    const init = async () => {
-      console.log('开始初始化插件...');
-      setLoading(true);
+    const savedContent = localStorage.getItem('markdownContent');
+    if (savedContent) {
+      setContent(savedContent);
+    }
+
+    // 如果在多维表格环境中，监听选择变化
+    const setupSelectionListener = async () => {
       try {
-        const selection = await bitable.base.getSelection();
-        console.log('获取到当前选择:', selection);
-
-        const { tableId, recordId, fieldId } = selection;
-        if (tableId && recordId && fieldId) {
-          const table = await bitable.base.getTableById(tableId);
-          const cellValue = await table.getCellValue(fieldId, recordId);
-          console.log('获取到初始单元格内容:', cellValue);
-          const processedValue = processCellValue(cellValue);
-          // 只有当获取到的内容不为空时，才更新content
-          if (processedValue.trim()) {
-            setContent(processedValue);
-            
-            // 给Markdown渲染一些时间，然后初始化Mermaid图表
-            setTimeout(() => {
-              initMermaid();
-            }, 800); // 给足够时间渲染Markdown
-          }
-        }
-
-        bitable.base.onSelectionChange(async (event) => {
-          console.log('选择发生变化:', event);
-          setLoading(true);
-          try {
-            const newSelection = await bitable.base.getSelection();
-            const { tableId, recordId, fieldId } = newSelection;
-            if (!tableId || !recordId || !fieldId) {
-              // 如果没有选择单元格，不更改内容，保持测试内容
-              setLoading(false);
+        const isInBitable = await isInBitableEnvironment();
+        setIsBitable(isInBitable);
+        
+        if (!isInBitable) {
+          console.log('不在多维表格环境中');
           return;
         }
-        
-            const table = await bitable.base.getTableById(tableId);
-            const cellValue = await table.getCellValue(fieldId, recordId);
 
-            console.log('获取到单元格内容:', cellValue);
-            const processedValue = processCellValue(cellValue);
-            // 只有当获取到的内容不为空时，才更新content
-            if (processedValue.trim()) {
-              setContent(processedValue);
-            }
-            setError('');
+        console.log('正在设置选择监听器...');
+        
+        // 获取初始选择
+        const selection = await bitable.base.getSelection();
+        console.log('初始选择:', selection);
+        
+        if (selection && selection.tableId && selection.recordId && selection.fieldId) {
+          setRecordId(selection.recordId);
+          setFieldId(selection.fieldId);
+          
+          // 获取初始单元格内容
+          try {
+            const value = await getCellValue(selection.recordId, selection.fieldId);
+            console.log('初始单元格内容:', value);
+            // 处理单元格内容，确保是字符串类型
+            const textContent = Array.isArray(value) 
+              ? value.map(item => item.text || '').filter(text => text).join('')
+              : typeof value === 'object' && value !== null
+                ? value.text || ''
+                : String(value || '');
+            console.log('处理后的内容:', textContent);
+            setContent(textContent);
           } catch (err) {
-            console.error('获取单元格内容失败:', err);
-            setError('获取内容失败，请重试');
-          } finally {
-            setLoading(false);
+            console.error('获取初始单元格内容失败:', err);
+          }
+        }
+        
+        // 监听选择变化
+        bitable.base.onSelectionChange(async (event: any) => {
+          console.log('选择已改变:', event);
+          
+          // 获取最新的选择
+          const newSelection = await bitable.base.getSelection();
+          console.log('新的选择:', newSelection);
+          
+          if (newSelection && newSelection.tableId && newSelection.recordId && newSelection.fieldId) {
+            setRecordId(newSelection.recordId);
+            setFieldId(newSelection.fieldId);
+            
+            // 获取新单元格内容
+            try {
+              const value = await getCellValue(newSelection.recordId, newSelection.fieldId);
+              console.log('新单元格内容:', value);
+              // 处理单元格内容，确保是字符串类型
+              const textContent = Array.isArray(value) 
+                ? value.map(item => item.text || '').filter(text => text).join('')
+                : typeof value === 'object' && value !== null
+                  ? value.text || ''
+                  : String(value || '');
+              console.log('处理后的内容:', textContent);
+              setContent(textContent);
+            } catch (err) {
+              console.error('获取新单元格内容失败:', err);
+            }
           }
         });
       } catch (err) {
-        console.error('插件初始化失败:', err);
-        setError('插件初始化失败，请检查控制台错误信息');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    init();
-  }, []);
-
-  // 初始化主题
-  useEffect(() => {
-    const initTheme = async () => {
-      try {
-        // 获取当前主题
-        if (bitable?.base) {
-          const base = bitable.base;
-          // 使用类型断言
-          const baseWithTheme = base as unknown as {
-            getTheme: () => Promise<string>;
-            onThemeChange: (callback: (theme: string) => void) => void;
-          };
-
-          // 检查 getTheme 方法是否存在
-          if (typeof baseWithTheme.getTheme === 'function') {
-            const currentTheme = await baseWithTheme.getTheme();
-            setBitableTheme(currentTheme as ThemeModeType);
-            
-            // 检查 onThemeChange 方法是否存在
-            if (typeof baseWithTheme.onThemeChange === 'function') {
-              baseWithTheme.onThemeChange((theme: string) => {
-                setBitableTheme(theme as ThemeModeType);
-              });
-            }
-          } else {
-            // 如果没有 getTheme 方法，使用默认主题
-            setBitableTheme(ThemeModeType.Light);
-          }
-        }
-      } catch (error) {
-        console.error('获取主题失败:', error);
-        // 发生错误时使用默认主题
-        setBitableTheme(ThemeModeType.Light);
+        console.error('设置选择监听器失败:', err);
       }
     };
     
-    initTheme();
-  }, [bitable]);
+    setupSelectionListener();
+  }, []);
 
-  // Mermaid图表初始化函数
-  const initMermaid = () => {
-    try {
-      // 获取所有Mermaid容器
-      const mermaidDivs = document.querySelectorAll('.mermaid');
-      if (mermaidDivs.length > 0) {
-        console.log('初始化Mermaid图表，数量:', mermaidDivs.length);
-        
-        // 初始化配置
-        if (typeof mermaid !== 'undefined' && typeof mermaid.mermaidAPI !== 'undefined') {
-          try {
-            mermaid.mermaidAPI.reset();
-          } catch (e) {
-            console.warn('Mermaid重置失败:', e);
-          }
-          
-          mermaid.initialize({
-            startOnLoad: false,
-            theme: bitableTheme === ThemeModeType.Dark ? 'dark' : 'default',
-            securityLevel: 'loose',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
-            flowchart: { htmlLabels: true, curve: 'basis' },
-            sequence: { useMaxWidth: false, wrap: true },
-            gantt: { useMaxWidth: false }
-          });
-          
-          // 处理每个Mermaid容器
-          mermaidDivs.forEach(div => {
-            try {
-              // 确保容器可见性
-              (div as HTMLElement).style.visibility = 'visible';
-              (div as HTMLElement).style.display = 'block';
-              (div as HTMLElement).style.overflow = 'visible';
-              
-              // 获取父容器并设置样式
-              const parent = div.parentElement;
-              if (parent) {
-                parent.style.overflow = 'visible';
-                parent.style.textAlign = 'center';
-              }
-            } catch (err) {
-              console.error('设置Mermaid容器样式失败:', err);
-            }
-          });
-          
-          // 初始化所有图表
-          setTimeout(() => {
-            try {
-              mermaid.init(undefined, '.mermaid');
-            } catch (err) {
-              console.error('Mermaid初始化失败:', err);
-              
-              // 尝试逐个初始化
-              mermaidDivs.forEach((div, index) => {
-                try {
-                  mermaid.init(undefined, div as HTMLElement);
-                } catch (e) {
-                  console.error(`Mermaid图表 #${index} 初始化失败:`, e);
-                }
-              });
-            }
-          }, 100);
-        } else {
-          console.error('无法访问mermaid对象，可能未正确加载');
-        }
-      }
-    } catch (error) {
-      console.error('初始化Mermaid失败:', error);
-    }
-  };
-  
-  // 监听内容更新
+  // 清除格式状态的定时器
   useEffect(() => {
-    if (content.trim()) {
-      // 给Markdown渲染一点时间，然后初始化Mermaid图表
+    if (formatStatus) {
       const timer = setTimeout(() => {
-        initMermaid();
-      }, 800);
+        setFormatStatus(null);
+      }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [content]);
+  }, [formatStatus]);
 
-  const handleSave = async (value: string) => {
-    try {
-      const selection = await bitable.base.getSelection();
-      if (selection.tableId && selection.recordId && selection.fieldId) {
-        const table = await bitable.base.getTableById(selection.tableId);
-        await table.setCellValue(selection.fieldId, selection.recordId, value);
-        console.log('内容已保存');
+  // 优化的滚动处理函数
+  const handleScroll = useCallback(() => {
+    const textarea = document.querySelector('textarea');
+    const previewContainer = document.querySelector('.overflow-auto');
+    
+    const currentScrollY = Math.max(
+      window.scrollY,
+      textarea?.scrollTop || 0,
+      previewContainer?.scrollTop || 0
+    );
+
+    // 使用更大的缓冲区和滚动方向判断
+    const threshold = 20;
+    const buffer = 30; // 增加缓冲区大小
+    const scrollingDown = currentScrollY > lastScrollY;
+
+    if (!isScrolled && scrollingDown && currentScrollY > threshold + buffer) {
+      setIsScrolled(true);
+    } else if (isScrolled && !scrollingDown && currentScrollY < threshold + buffer) {
+      setIsScrolled(false);
+    }
+
+    setLastScrollY(currentScrollY);
+  }, [isScrolled, lastScrollY]);
+
+  // 使用防抖的滚动处理函数，增加延迟时间
+  const debouncedHandleScroll = useCallback(
+    debounce(handleScroll, 100), // 增加防抖时间
+    [handleScroll]
+  );
+
+  // 添加滚动监听
+  useEffect(() => {
+    // 监听窗口滚动
+    window.addEventListener('scroll', debouncedHandleScroll);
+    
+    // 监听编辑器和预览容器滚动
+    const textarea = document.querySelector('textarea');
+    const previewContainer = document.querySelector('.overflow-auto');
+    
+    textarea?.addEventListener('scroll', debouncedHandleScroll);
+    previewContainer?.addEventListener('scroll', debouncedHandleScroll);
+
+    // 定期检查滚动状态，因为编辑模式切换时需要重新绑定事件
+    const intervalId = setInterval(() => {
+      const newTextarea = document.querySelector('textarea');
+      if (newTextarea && newTextarea !== textarea) {
+        textarea?.removeEventListener('scroll', debouncedHandleScroll);
+        newTextarea.addEventListener('scroll', debouncedHandleScroll);
       }
+    }, 1000);
+
+    return () => {
+      window.removeEventListener('scroll', debouncedHandleScroll);
+      textarea?.removeEventListener('scroll', debouncedHandleScroll);
+      previewContainer?.removeEventListener('scroll', debouncedHandleScroll);
+      clearInterval(intervalId);
+    };
+  }, [debouncedHandleScroll]);
+
+  // 保存内容到localStorage和飞书单元格
+  const handleSave = async (newContent: string) => {
+    try {
+      // 保存到 localStorage
+      localStorage.setItem('markdownContent', newContent);
+      setContent(newContent);
+
+      // 如果在飞书环境中，保存到单元格
+      if (isBitable && recordId && fieldId) {
+        console.log('准备保存内容到飞书单元格:', newContent);
+        await setCellValue(recordId, fieldId, newContent);
+        console.log('内容已保存到飞书单元格');
+      }
+
+      return Promise.resolve();
     } catch (error) {
       console.error('保存失败:', error);
-      setError('保存失败，请重试');
+      throw error;
     }
   };
 
+  // 一键格式化
+  const handleFormat = () => {
+    try {
+      const formattedContent = formatMarkdown(content);
+      setContent(formattedContent);
+      localStorage.setItem('markdownContent', formattedContent);
+      setFormatStatus('success');
+    } catch (error) {
+      console.error('格式化失败:', error);
+      setFormatStatus('error');
+    }
+  };
+
+  useEffect(() => {
+    const checkEnvironment = async () => {
+      const isInBitable = await isInBitableEnvironment();
+      setIsBitable(isInBitable);
+    };
+    checkEnvironment();
+  }, []);
+
   return (
-    <div 
-      className="markdown-content-container for-clipboard"
-      style={{ 
-        padding: '16px',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        ...themes[currentTheme].containerStyle,
-        transition: 'all 0.3s ease'
-      }}
-    >
-      {/* 添加全局样式 */}
-      <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
-      
-      <div style={{
-        marginBottom: '16px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        gap: '12px',
-        borderBottom: currentTheme === 'notionStyle' ? '1px solid #e3e2e0' : '1px solid #d0d7de',
-        paddingBottom: '12px',
-        flexShrink: 0
-      }}>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            onClick={() => setIsEditing(!isEditing)}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: isEditing ? 
-                (currentTheme === 'notionStyle' ? '#f7f6f3' : '#f6f8fa') : 
-                (currentTheme === 'notionStyle' ? '#2eaadc' : '#2da44e'),
-              color: isEditing ? 
-                (currentTheme === 'notionStyle' ? '#37352f' : '#24292e') : 
-                '#ffffff',
-              border: isEditing ? 
-                (currentTheme === 'notionStyle' ? '1px solid #e3e2e0' : '1px solid #d0d7de') : 
-                (currentTheme === 'notionStyle' ? '1px solid #2eaadc' : 'none'),
-              borderRadius: currentTheme === 'notionStyle' ? '3px' : '3px',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              fontWeight: currentTheme === 'notionStyle' ? 400 : 500,
-              fontSize: '14px',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
-              boxShadow: currentTheme === 'notionStyle' ? (isEditing ? 'none' : '0 1px 2px rgba(0, 0, 0, 0.1)') : 'none'
-            }}
-          >
-            {isEditing ? '退出编辑' : '编辑模式'}
-          </button>
-          
-          {!isEditing && (
-            <button
-              onClick={() => setShowFormatted(!showFormatted)}
-              style={{
-                padding: '6px 12px',
-                backgroundColor: showFormatted ? 
-                  (currentTheme === 'notionStyle' ? '#2eaadc' : '#2da44e') : 
-                  (currentTheme === 'notionStyle' ? '#f7f6f3' : '#f6f8fa'),
-                color: showFormatted ? 
-                  '#ffffff' : 
-                  (currentTheme === 'notionStyle' ? '#37352f' : '#24292e'),
-                border: showFormatted ? 
-                  'none' : 
-                  (currentTheme === 'notionStyle' ? '1px solid #e3e2e0' : '1px solid #d0d7de'),
-                borderRadius: '3px',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                fontWeight: currentTheme === 'notionStyle' ? 400 : 500,
-                fontSize: '14px',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
-                boxShadow: currentTheme === 'notionStyle' ? (showFormatted ? '0 1px 2px rgba(0, 0, 0, 0.1)' : 'none') : 'none'
-              }}
-            >
-              {showFormatted ? '显示原文' : '显示排版'}
-            </button>
-          )}
-
-          {isEditing && (
-            <button
-              onClick={() => handleSave(content)}
-              style={{
-                padding: '6px 12px',
-                backgroundColor: currentTheme === 'notionStyle' ? '#0f9d58' : '#2da44e',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '3px',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                fontWeight: currentTheme === 'notionStyle' ? 400 : 500,
-                fontSize: '14px',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
-                boxShadow: currentTheme === 'notionStyle' ? '0 1px 2px rgba(0, 0, 0, 0.1)' : 'none'
-              }}
-            >
-              保存
-            </button>
-          )}
-          
-          <button
-            onClick={handleCopyClick}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: copySuccess ? 
-                (currentTheme === 'notionStyle' ? '#2eaadc' : '#2da44e') : 
-                (currentTheme === 'notionStyle' ? '#f7f6f3' : '#f6f8fa'),
-              color: copySuccess ? 
-                '#ffffff' : 
-                (currentTheme === 'notionStyle' ? '#37352f' : '#24292e'),
-              border: copySuccess ? 
-                (currentTheme === 'notionStyle' ? '1px solid #2eaadc' : 'none') : 
-                (currentTheme === 'notionStyle' ? '1px solid #e3e2e0' : '1px solid #d0d7de'),
-              borderRadius: '3px',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              fontWeight: currentTheme === 'notionStyle' ? 400 : 500,
-              fontSize: '14px',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
-              boxShadow: currentTheme === 'notionStyle' ? (copySuccess ? '0 1px 2px rgba(0, 0, 0, 0.1)' : 'none') : 'none'
-            }}
-          >
-            {copySuccess ? '已复制' : '复制内容'}
-          </button>
-        </div>
-        <select
-          value={currentTheme}
-          onChange={(e) => setCurrentTheme(e.target.value as keyof typeof themes)}
-          style={{
-            padding: '6px 12px',
-            borderRadius: '3px',
-            border: currentTheme === 'notionStyle' ? '1px solid #e3e2e0' : '1px solid #d0d7de',
-            cursor: 'pointer',
-            backgroundColor: currentTheme === 'notionStyle' ? '#f7f6f3' : '#f6f8fa',
-            color: currentTheme === 'notionStyle' ? '#37352f' : '#24292e',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
-            fontSize: '14px'
-          }}
-        >
-          {Object.entries(themes).map(([key, theme]) => (
-            <option key={key} value={key}>{theme.name}</option>
-          ))}
-        </select>
-      </div>
-
-      {loading && (
-        <div style={{ 
-          marginBottom: '16px', 
-          color: currentTheme === 'notionStyle' ? '#9b9a97' : '#6a737d',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
-          flexShrink: 0
-        }}>加载中...</div>
-      )}
-      {error && (
-        <div style={{ 
-          marginBottom: '16px', 
-          color: currentTheme === 'notionStyle' ? '#eb5757' : '#cf222e',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
-          flexShrink: 0
-        }}>{error}</div>
-      )}
-      {!loading && content && (
-        <div style={{ 
-          width: '100%',
-          display: 'flex',
-          gap: '16px',
-          flex: 1,
-          minHeight: 0,
-          overflow: 'hidden'
-        }}>
-          {isEditing && (
-            <div style={{ 
-              flex: 1,
-          border: currentTheme === 'notionStyle' ? '1px solid #e3e2e0' : '1px solid #d0d7de',
-          borderRadius: '3px',
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column'
-            }}>
-              <textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-              style={{
-                  width: '100%',
-                  flex: 1,
-                padding: '16px',
-                  border: 'none',
-                  resize: 'none',
-                  fontFamily: currentTheme === 'notionStyle' 
-                    ? 'SFMono-Regular, Monaco, Menlo, Consolas, "Liberation Mono", "Courier New", monospace'
-                    : '"SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace',
-                  fontSize: currentTheme === 'notionStyle' ? '15px' : '13px',
-                lineHeight: currentTheme === 'notionStyle' ? '1.7' : '1.6',
-                  backgroundColor: currentTheme === 'notionStyle' ? '#f7f6f3' : '#ffffff',
-                  color: currentTheme === 'notionStyle' ? '#37352f' : '#24292e'
-                }}
-              />
+    <div className="min-h-screen bg-[#ffffff]">
+      <header className={`sticky top-0 z-30 transition-all duration-300 ease-in-out
+        ${isScrolled 
+          ? 'py-2 bg-white/95 shadow-sm' 
+          : 'py-4 bg-white/80'} 
+        backdrop-blur-sm border-b border-gray-200/80`}>
+        <div className="flex items-center justify-between px-6">
+          <div className="flex items-center gap-3">
+            <div className={`flex items-center gap-2 transition-all duration-300 ${isScrolled ? 'scale-90 -translate-x-1' : ''}`}>
+              <svg className={`transition-all duration-300 ${isScrolled ? 'w-6 h-6' : 'w-8 h-8'} text-gray-800`} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <h1 className={`tracking-tight font-semibold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600
+                transition-all duration-300 ${isScrolled ? 'text-lg' : 'text-[22px]'}`}>
+                Markdown助手
+              </h1>
             </div>
-          )}
-            <div 
-              ref={formattedContentRef}
-              style={{
-              flex: 1,
-              overflow: 'auto',
-              backgroundColor: 'transparent',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            {!isEditing && !showFormatted ? (
-              <pre style={{
-                margin: 0,
-                whiteSpace: 'pre-wrap',
-                wordWrap: 'break-word',
-                fontFamily: currentTheme === 'notionStyle' 
-                  ? 'ui-monospace, SFMono-Regular, Monaco, Menlo, Consolas, "Liberation Mono", "Courier New", monospace'
-                  : '"SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace',
-                fontSize: currentTheme === 'notionStyle' ? '14px' : '13px',
-                lineHeight: currentTheme === 'notionStyle' ? '1.7' : '1.5',
-                color: currentTheme === 'notionStyle' ? 'rgb(55, 53, 47)' : '#24292e',
-                backgroundColor: currentTheme === 'notionStyle' ? 'rgba(247, 246, 243, 0.7)' : '#f6f8fa',
-                padding: '16px',
-                borderRadius: '6px',
-                border: '1px solid #d0d7de',
-                minHeight: '100%',
-                boxSizing: 'border-box',
-                width: '100%'
-              }}>
-                {content}
-              </pre>
-            ) : (
-              <MarkdownRenderer 
-                content={content} 
-                theme={currentTheme} 
-                darkMode={bitableTheme === ThemeModeType.Dark}
-              />
-          )}
+          </div>
+          <div className="flex items-center gap-3">
+            {!isBitable && (
+              <button 
+                className={`group flex items-center gap-1.5 text-sm text-gray-600 
+                  bg-white hover:bg-gray-50 
+                  border border-gray-200 hover:border-gray-300
+                  rounded-md transition-all duration-200 shadow-sm
+                  ${isScrolled ? 'px-2.5 py-1' : 'px-3 py-1.5'}`}
+                onClick={handleFormat}
+                title="美化整个文档的格式"
+              >
+                <svg className="w-4 h-4 text-gray-500 group-hover:text-gray-700 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} 
+                    d="M4 6h16M4 12h16m-7 6h7" />
+                </svg>
+                <span className="font-medium">格式化文档</span>
+              </button>
+            )}
           </div>
         </div>
-      )}
+        <p className={`text-[13px] text-gray-500 font-medium px-6
+          transition-all duration-300 overflow-hidden
+          ${isScrolled ? 'h-0 opacity-0 mt-0' : 'h-auto opacity-100 mt-2'}`}>
+          {isBitable 
+            ? '在飞书多维表格中使用此扩展编辑Markdown单元格' 
+            : '此应用用于编辑和预览Markdown文本'}
+        </p>
+        {formatStatus && (
+          <div className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full
+            px-3 py-1.5 rounded-md text-[13px] font-medium shadow-sm backdrop-blur-sm
+            transition-all duration-300 animate-fade-in ${
+            formatStatus === 'success' 
+              ? 'bg-emerald-50/90 text-emerald-700 border border-emerald-100/80' 
+              : 'bg-rose-50/90 text-rose-700 border border-rose-100/80'
+          }`}>
+            {formatStatus === 'success' 
+              ? <div className="flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  格式化成功
+                </div>
+              : <div className="flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  格式化失败
+                </div>
+            }
+          </div>
+        )}
+      </header>     
+
+      <main className="flex-1">
+        {isBitable ? (
+          <div className="bitable-editor-container">
+            {recordId && fieldId ? (
+              <SplitEditor 
+                initialValue={content}
+                onSave={handleSave}
+                recordId={recordId}
+                fieldId={fieldId}
+              />
+            ) : (
+              <div className="bg-notice-bg rounded-lg p-6 m-5 text-notice-text text-[15px] leading-relaxed shadow-sm">
+                <p className="text-notice-hint text-sm">提示：点击任意文本类型的字段以查看或编辑其Markdown内容</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="h-editor min-h-editor w-full flex box-border md:h-editor-mobile">
+              <SplitEditor 
+                initialValue={content}
+                onSave={handleSave}
+              />
+            </div>
+          </>
+        )}
+      </main>
+      <ScrollToTop />
+      <footer className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200/80 z-[1000] p-0 m-0 box-border">
+        <p className="m-0 py-2 text-xs text-gray-500 text-center font-normal">Markdown助手 v1.0.0</p>
+      </footer>
     </div>
   );
 };

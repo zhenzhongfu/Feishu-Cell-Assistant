@@ -5,17 +5,21 @@
   "main": "src/index.tsx",
   "scripts": {
     "dev": "vite",
+    "start": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "setup": "npm install && npm run dev"
   },
   "dependencies": {
     "@doocs/md-cli": "^0.1.1",
     "@lark-base-open/js-sdk": "^0.3.6",
+    "@types/katex": "^0.16.7",
     "@types/react-syntax-highlighter": "^15.5.13",
     "axios": "^1.6.2",
+    "dompurify": "^3.2.4",
     "github-markdown-css": "^5.8.1",
     "katex": "^0.16.21",
-    "marked": "^11.0.0",
+    "marked": "^11.2.0",
     "mermaid": "^11.5.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -27,11 +31,20 @@
     "remark-math": "^6.0.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.26.10",
+    "@babel/plugin-transform-react-jsx": "^7.25.9",
+    "@babel/preset-env": "^7.26.9",
+    "@babel/preset-react": "^7.26.3",
+    "@babel/preset-typescript": "^7.27.0",
+    "@types/dompurify": "^3.2.0",
     "@types/marked": "^5.0.2",
     "@types/node": "^22.13.11",
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",
     "@vitejs/plugin-react": "^4.2.0",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.1",
     "terser": "^5.39.0",
     "typescript": "^5.2.2",
     "vite": "^5.0.0"

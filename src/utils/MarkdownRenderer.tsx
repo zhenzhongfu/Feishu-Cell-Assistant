@@ -8,19 +8,10 @@ import mermaid from 'mermaid';
 import 'katex/dist/katex.min.css';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { 
-  // oneDark, 
   oneLight,
   tomorrow
 } from 'react-syntax-highlighter/dist/esm/styles/prism';
-
-// // Mac风格的代码块窗口按钮SVG
-// const macCodeSvg = `
-//   <svg xmlns="http://www.w3.org/2000/svg" version="1.1" x="0px" y="0px" width="45px" height="13px" viewBox="0 0 450 130">
-//     <ellipse cx="50" cy="65" rx="50" ry="52" stroke="rgb(220,60,54)" stroke-width="2" fill="rgb(237,108,96)" />
-//     <ellipse cx="225" cy="65" rx="50" ry="52" stroke="rgb(218,151,33)" stroke-width="2" fill="rgb(247,193,81)" />
-//     <ellipse cx="400" cy="65" rx="50" ry="52" stroke="rgb(27,161,37)" stroke-width="2" fill="rgb(100,200,86)" />
-//   </svg>
-// `.trim();
+import MermaidRenderer from './markdown/components/MermaidRenderer';
 
 // 创建HTML实体解码器
 const decodeHTML = (html: string): string => {
@@ -751,138 +742,32 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme = 'n
             
             // 处理代码（行内代码和代码块）
             code: ({ inline, className, children, ...props }: any) => {
-              try {
-                // 对行内代码做特殊处理
-                let codeText = typeof children === 'string' ? children : String(children);
-                
-                // 检查是否是行内代码
-                if (props.node?.position?.start?.line === props.node?.position?.end?.line || inline) {
-                  // 始终对行内代码内容进行HTML实体转义，确保所有内容显示为原始文本
-                  codeText = codeText
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;')
-                    .replace(/"/g, '&quot;')
-                    .replace(/'/g, '&#039;')
-                    .replace(/\[/g, '&#91;')
-                    .replace(/\]/g, '&#93;')
-                    .replace(/\(/g, '&#40;')
-                    .replace(/\)/g, '&#41;');
-                  
-                  return (
-                    <code 
-                      {...props} 
-                      className={`markdown-inline-code ${className || ''}`} 
-                      style={{
-                        display: 'inline',
-                        boxSizing: 'border-box', 
-                        padding: '0.2em 0.4em',
-                        margin: '0',
-                        fontSize: '85%',
-                        backgroundColor: darkMode 
-                          ? 'rgba(255, 255, 255, 0.1)'
-                          : (theme === 'notionStyle' ? 'rgba(135, 131, 120, 0.15)' : 'rgba(27, 31, 35, 0.05)'),
-                        borderRadius: '4px',
-                        fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace',
-                        color: darkMode
-                          ? (theme === 'notionStyle' ? '#e6e6e6' : '#c9d1d9')
-                          : (theme === 'notionStyle' ? '#eb5757' : '#d14'),
-                        whiteSpace: 'normal',
-                        wordBreak: 'keep-all',
-                        wordWrap: 'normal',
-                        borderStyle: 'none',
-                        verticalAlign: 'middle'
-                      }}
-                      dangerouslySetInnerHTML={{ __html: codeText }}
-                    />
-                  );
-                }
-                
-                // 解析语言
-                const language = className ? className.replace('language-', '') : '';
-                
-                // 判断是否为Mermaid代码块
-                if (language === 'mermaid') {
-                  // 生成唯一ID以避免冲突
-                  const mermaidId = `mermaid-${Math.random().toString(36).substring(2, 10)}`;
-                  return (
-                    <div className="mermaid-wrapper" style={{
-                      backgroundColor: darkMode
-                        ? 'rgba(255, 255, 255, 0.05)'
-                        : (theme === 'notionStyle' ? '#f7f6f3' : '#f6f8fa'),
-                      borderRadius: theme === 'notionStyle' ? '3px' : '6px',
-                      padding: '16px',
-                      marginBottom: '16px',
-                      overflow: 'visible !important',
-                      textAlign: 'center',
-                      maxWidth: '100%',
-                      border: darkMode
-                        ? '1px solid rgba(255, 255, 255, 0.1)'
-                        : (theme === 'notionStyle' ? '1px solid #e3e2e0' : 'none'),
-                      position: 'relative'
-                    }}>                      
-                      <pre id={mermaidId} className="mermaid" style={{
-                        background: 'transparent',
-                        color: darkMode ? '#e6e6e6' : (theme === 'notionStyle' ? '#37352f' : '#24292e'),
-                        textAlign: 'center',
-                        margin: '0 auto',
-                        overflow: 'visible !important',
-                        display: 'inline-block',
-                        minWidth: '100%',
-                        padding: '10px 0'
-                      }}>
-                        {String(children).trim()}
-                      </pre>
-                    </div>
-                  );
-                }
-                
-                // 使用 react-syntax-highlighter 渲染代码块
+              const match = /language-(\w+)/.exec(className || '');
+              const language = match ? match[1] : '';
+              const value = String(children).replace(/\n$/, '');
+
+              if (language === 'mermaid') {
+                return <MermaidRenderer code={value} />;
+              }
+
+              if (!inline) {
                 return (
                   <SyntaxHighlighter
-                    {...props}
                     style={theme === 'notionStyle' ? tomorrow : oneLight}
                     language={language}
-                    className={`markdown-block-code ${className || ''}`}
-                    showLineNumbers={true}
-                    wrapLines={true}
-                    customStyle={{
-                      margin: 0,
-                      padding: '16px 0',
-                      background: theme === 'notionStyle' ? '#f7f6f3' : '#f6f8fa',
-                      fontSize: '90%',
-                      fontFamily: theme === 'notionStyle' 
-                        ? 'SFMono-Regular, Monaco, Menlo, Consolas, "Liberation Mono", "Courier New", monospace'
-                        : 'ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace',
-                      lineHeight: theme === 'notionStyle' ? 1.7 : 1.6,
-                      borderRadius: theme === 'notionStyle' ? '3px' : '6px'
-                    }}
-                    wrapLongLines={false}
-                    codeTagProps={{
-                      style: {
-                        display: 'block',
-                        overflowX: 'auto',
-                        paddingBottom: 0,
-                        marginBottom: 0
-                      }
-                    }}
-                    lineNumberStyle={{
-                      minWidth: '3em',
-                      paddingRight: '1em',
-                      fontSize: '90%',
-                      textAlign: 'right',
-                      color: theme === 'notionStyle' ? '#a1a1a1' : '#959da5',
-                      borderRight: theme === 'notionStyle' ? '1px solid #e3e2e0' : 'none',
-                      marginRight: theme === 'notionStyle' ? '10px' : '0'
-                    }}
+                    PreTag="div"
+                    {...props}
                   >
-                    {codeText.trim()}
+                    {value}
                   </SyntaxHighlighter>
                 );
-              } catch (error) {
-                console.error('代码渲染错误:', error);
-                return <code {...props}>{children}</code>;
               }
+
+              return (
+                <code className={className} {...props}>
+                  {children}
+                </code>
+              );
             },
             
             // 处理pre标签（代码块的容器）
@@ -901,7 +786,6 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme = 'n
               
               // Mermaid图表特殊处理
               if (language === 'mermaid') {
-                // const mermaidId = `mermaid-${Math.random().toString(36).substring(2, 10)}`;
                 return (
                   <div className="mermaid-container" style={{
                     backgroundColor: darkMode
