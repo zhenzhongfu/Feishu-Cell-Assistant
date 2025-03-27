@@ -6,9 +6,8 @@ import CodeBlock from '../utils/markdown/components/CodeBlock';
 import MermaidRenderer from '../utils/markdown/components/MermaidRenderer';
 import katex from 'katex';
 import MarkdownToolbar from './MarkdownToolbar';
-import mermaid from 'mermaid';
 import 'katex/dist/katex.min.css';
-import { getCellValue, setCellValue } from '../utils/bitable';
+import { getCellValue } from '../utils/bitable';
 import Modal from './Modal';
 
 // 配置 marked 解析器

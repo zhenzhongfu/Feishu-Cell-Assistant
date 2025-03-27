@@ -42,7 +42,7 @@ export function formatMarkdown(markdown: string): string {
     // 9. 规范化表格分隔行，确保分隔符长度一致
     formatted = formatted.replace(
       /\|(\s*[-:]+\s*)\|(\s*[-:]+\s*)\|/g,
-      (match, p1, p2) => {
+      (_match, p1, p2) => {
         const len1 = p1.trim().length;
         const len2 = p2.trim().length;
         const maxLen = Math.max(len1, len2);
