@@ -171,7 +171,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
   return (
     <div className={`relative rounded-lg overflow-hidden bg-[#1e1e1e] ${className}`}>
       {/* 操作栏 */}
-      <div className="absolute right-2 top-2 flex items-center gap-2 z-10">
+      <div className="codebar absolute right-2 top-2 flex items-center gap-2 z-10">
         {/* 复制按钮 */}
         <button
           className={`px-2 py-1 text-xs rounded bg-gray-700 hover:bg-gray-600 text-gray-200 transition-colors ${

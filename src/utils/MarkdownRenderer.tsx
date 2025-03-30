@@ -581,8 +581,39 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme = 'n
             }} />,
             li: ({...props}) => <li {...props} className="markdown-li" style={{
               marginTop: '0.25em',
-              marginBottom: '0.25em'
+              marginBottom: '0.25em',
+              color: darkMode ? (theme === 'notionStyle' ? '#e6e6e6' : '#c9d1d9') : (theme === 'notionStyle' ? '#2e2d29' : '#24292f')
             }} />,
+            
+            // 处理强调和加粗
+            em: ({node, ...props}) => {
+              // 检查是否在列表项中
+              const isInListItem = (node: any): boolean => {
+                if (!node || !node.parentNode) return false;
+                if (node.parentNode.tagName === 'LI') return true;
+                return isInListItem(node.parentNode);
+              };
+              
+              const inList = node && isInListItem(node);
+              
+              return <em {...props} className="markdown-em" style={{
+                color: inList ? '#1A1A1A' : undefined
+              }} />;
+            },
+            strong: ({node, ...props}) => {
+              // 检查是否在列表项中
+              const isInListItem = (node: any): boolean => {
+                if (!node || !node.parentNode) return false;
+                if (node.parentNode.tagName === 'LI') return true;
+                return isInListItem(node.parentNode);
+              };
+              
+              const inList = node && isInListItem(node);
+              
+              return <strong {...props} className="markdown-strong" style={{
+                color: inList ? '#1A1A1A' : undefined
+              }} />;
+            },
             
             // 处理引用
             blockquote: ({children, node, ...props}: any) => {
@@ -861,10 +892,6 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme = 'n
             tr: ({...props}) => <tr {...props} />,
             th: ({...props}) => <th {...props} />,
             td: ({...props}) => <td {...props} />,
-            
-            // 处理强调和加粗
-            em: ({...props}) => <em {...props} className="markdown-em" />,
-            strong: ({...props}) => <strong {...props} className="markdown-strong" />,
             
             // 处理图片
             img: ({...props}) => {

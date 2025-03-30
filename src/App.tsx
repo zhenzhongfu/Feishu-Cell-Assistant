@@ -4,6 +4,8 @@ import { formatMarkdown } from './utils/markdown/formatters';
 import SplitEditor from './components/SplitEditor';
 import { isInBitableEnvironment, getCellValue, setCellValue } from './utils/bitable';
 import ScrollToTop from './components/ScrollToTop';
+import './styles/tailwind.css';
+import './styles/markdownBase.css';
 
 // 示例Markdown内容
 const exampleMarkdown = `# Markdown单元格助手
@@ -272,6 +274,11 @@ const App: React.FC = () => {
       setIsBitable(isInBitable);
     };
     checkEnvironment();
+  }, []);
+
+  // 设置默认主题为notion
+  useEffect(() => {
+    document.body.setAttribute('data-theme', 'notion');
   }, []);
 
   return (

@@ -18,6 +18,7 @@
     "axios": "^1.6.2",
     "dompurify": "^3.2.4",
     "github-markdown-css": "^5.8.1",
+    "html2pdf.js": "^0.10.3",
     "katex": "^0.16.21",
     "marked": "^11.2.0",
     "mermaid": "^11.5.0",
