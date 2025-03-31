@@ -36,31 +36,35 @@
 body[data-theme="notion"] {
   /* 编辑区样式 */
   --editor-bg: #ffffff;
-  --editor-text: #1f1f1f;
-  --editor-border: #d9d8d4;
+  --editor-text: #37352f;
+  --editor-border: #e1e4e8;
   --editor-font-size: 15px;
 
   /* 预览区样式 */
   --preview-bg: #ffffff;
-  --preview-text: #1f1f1f;
-  --preview-heading: #121212;
-  --preview-link: #0b76b8;
-  --preview-link-hover: #085d92;
-  --preview-code-bg: #f5f4f0;
-  --preview-code-text: #ca3323;
-  --preview-code-border: #d9d8d4;
-  --preview-inline-code-bg: #ebeae6;
-  --preview-blockquote-bg: #f5f4f0;
-  --preview-blockquote-border: #d9d8d4;
-  --preview-blockquote-text: #4f4e49;
-  --preview-table-border: #d9d8d4;
-  --preview-table-header-bg: #f0efe9;
+  --preview-text: #37352f;
+  --preview-heading: #37352f;
+  --preview-link: rgba(55, 53, 47, 0.6);
+  --preview-link-hover: #37352f;
+  --preview-code-bg: #f1f1f1;
+  --preview-code-text: #37352f;
+  --preview-code-border: #e1e4e8;
+  --preview-inline-code-bg: #f1f1f1;
+  --preview-blockquote-bg: #f9f9f9;
+  --preview-blockquote-border: #ccc;
+  --preview-blockquote-text: #37352f;
+  --preview-table-border: #e1e4e8;
+  --preview-table-header-bg: #f9f9f9;
   --preview-table-odd-row-bg: #ffffff;
-  --preview-table-even-row-bg: #fafaf8;
-  --preview-border: #d9d8d4;
+  --preview-table-even-row-bg: #f9f9f9;
+  --preview-border: #e1e4e8;
+  
+  /* Notion特有的字体设置 */
+  --notion-font: inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica,
+    "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
   
   /* 整体背景色 */
-  background-color: #f3f2ef;
+  background-color: #ffffff;
 }
 
 /* GitHub主题变量 */
@@ -362,4 +366,80 @@ body[data-theme="github"] .editor-textarea {
 /* 预览区域容器样式 */
 .preview-container {
   background-color: var(--preview-bg);
+}
+
+.markdown-content[data-theme="notion"] {
+  font-family: var(--notion-font);
+  color: var(--preview-text);
+}
+
+.markdown-content[data-theme="notion"] h1,
+.markdown-content[data-theme="notion"] h2,
+.markdown-content[data-theme="notion"] h3,
+.markdown-content[data-theme="notion"] h4,
+.markdown-content[data-theme="notion"] h5,
+.markdown-content[data-theme="notion"] h6 {
+  font-family: var(--notion-font);
+  font-weight: 600;
+  line-height: 1.1;
+  padding: 3px 2px;
+}
+
+.markdown-content[data-theme="notion"] h1 { font-size: 2.5em; }
+.markdown-content[data-theme="notion"] h2 { font-size: 1.875em; }
+.markdown-content[data-theme="notion"] h3 { font-size: 1.5em; }
+.markdown-content[data-theme="notion"] h4 { font-size: 1.25em; }
+.markdown-content[data-theme="notion"] h5 { font-size: 1.1em; }
+.markdown-content[data-theme="notion"] h6 { font-size: 1em; }
+
+.markdown-content[data-theme="notion"] a {
+  color: var(--preview-link);
+  text-decoration: none;
+  padding: 3px;
+  border-radius: 3px;
+  transition: background 120ms ease-in 0s;
+}
+
+.markdown-content[data-theme="notion"] a:hover {
+  background: rgba(55, 53, 47, 0.08);
+  text-decoration: none;
+}
+
+.markdown-content[data-theme="notion"] blockquote {
+  margin: 1.5em 10px;
+  padding: 40px 20px;
+  quotes: "\\201C""\\201D""\\2018""\\2019";
+  font-style: italic;
+  border-left: 3px solid var(--preview-blockquote-border);
+}
+
+.markdown-content[data-theme="notion"] blockquote:before {
+  color: #ccc;
+  content: open-quote;
+  font-size: 4em;
+  line-height: 0.1em;
+  margin-right: 0.25em;
+  vertical-align: -0.4em;
+}
+
+.markdown-content[data-theme="notion"] pre {
+  background: var(--preview-code-bg);
+  padding: 15px;
+  margin: 15px 5px;
+  border-radius: 3px;
+  font-size: 0.9em;
+  line-height: 1.25;
+}
+
+.markdown-content[data-theme="notion"] code {
+  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace;
+}
+
+.markdown-content[data-theme="notion"] p code,
+.markdown-content[data-theme="notion"] li code {
+  background: var(--preview-inline-code-bg);
+  padding: 3px 6px;
+  border-radius: 3px;
+  font-size: 0.9em;
+  color: var(--preview-code-text);
 } 

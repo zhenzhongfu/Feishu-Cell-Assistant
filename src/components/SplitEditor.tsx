@@ -1527,11 +1527,11 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
   });
 
   // 生成当前主题的样式 - 移除isDarkMode参数
-  const themeStyles = generateThemeStyles(currentStyle);
+  // const themeStyles = generateThemeStyles(currentStyle);
 
-  // 记录当前触发滚动的元素
-  const scrollingElement = useRef<'textarea' | 'preview' | null>(null);
-  const isScrolling = useRef(false);
+  // // 记录当前触发滚动的元素
+  // const scrollingElement = useRef<'textarea' | 'preview' | null>(null);
+  // const isScrolling = useRef(false);
   const textareaContainerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -1542,7 +1542,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
   const previousFieldId = useRef(fieldId);
   const isInitialMount = useRef(true);
   const isSaving = useRef(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // 监听 initialValue 的变化
   useEffect(() => {
