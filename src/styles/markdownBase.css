@@ -10,7 +10,7 @@
   --editor-text: #1f1f1f;
   --editor-border: #e1e4e8;
   --editor-font-size: var(--font-size);
-  --editor-padding: 20px 40px 20px 20px;
+  --editor-padding: 15px 15px 15px 15px;
   
   /* 默认主题颜色 - 预览区 */
   --preview-bg: #ffffff;
@@ -38,7 +38,7 @@ body[data-theme="notion"] {
   --editor-bg: #ffffff;
   --editor-text: #1f1f1f;
   --editor-border: #d9d8d4;
-  --editor-font-size: 13px;
+  --editor-font-size: 15px;
 
   /* 预览区样式 */
   --preview-bg: #ffffff;
@@ -69,6 +69,7 @@ body[data-theme="github"] {
   --editor-bg: #ffffff;
   --editor-text: #1a1f24;
   --editor-border: #bdc4cc;
+  --editor-font-size: 15px;
 
   /* 预览区样式 */
   --preview-bg: #ffffff;
@@ -93,20 +94,30 @@ body[data-theme="github"] {
   background-color: #f0f6fc;
 }
 
-/* 编辑区基础样式 */
-textarea.editor-textarea {
-  font-family: var(--font-family);
-  font-size: var(--editor-font-size);
-  line-height: var(--line-height);
-  color: var(--editor-text);
+/* 编辑器基础样式 */
+.editor-textarea {
   background-color: var(--editor-bg);
+  color: var(--editor-text);
+  line-height: 1.5;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
   padding: var(--editor-padding);
+  letter-spacing: -0.1px;
+  overflow: auto;
   width: 100%;
   height: 100%;
   resize: none;
   outline: none;
   white-space: pre-wrap;
-  overflow: auto;
+  font-size: var(--editor-font-size);
+}
+
+/* 增加主题特定样式的优先级 */
+body[data-theme="notion"] .editor-textarea {
+  font-size: var(--editor-font-size) !important;
+}
+
+body[data-theme="github"] .editor-textarea {
+  font-size: var(--editor-font-size) !important;
 }
 
 /* 编辑区容器样式 */
@@ -115,15 +126,14 @@ textarea.editor-textarea {
   border-right: 1px solid var(--editor-border);
 }
 
-/* Markdown预览区基础样式 */
+/* 预览区域基础样式 */
 .markdown-content {
-  font-family: var(--font-family);
-  font-size: var(--font-size);
-  line-height: var(--line-height);
-  word-wrap: break-word;
+  font-size: 16px;
+  line-height: 1.5;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
   color: var(--preview-text);
-  background-color: var(--preview-bg);
-  padding: 20px 24px;
+  letter-spacing: -0.1px;
+  padding: var(--preview-padding, 16px 16px 32px);
 }
 
 /* 标题样式 */
@@ -158,6 +168,19 @@ textarea.editor-textarea {
   color: var(--preview-text);
   margin: 0.75em 0;
   line-height: var(--line-height);
+}
+
+/* 强调文本样式 */
+.markdown-content strong,
+.markdown-content b {
+  color: var(--preview-text);
+  font-weight: 600;
+}
+
+.markdown-content em,
+.markdown-content i {
+  color: var(--preview-text);
+  font-style: italic;
 }
 
 /* 链接样式 */
@@ -329,4 +352,14 @@ textarea.editor-textarea {
   .markdown-content {
     padding: 12px 16px;
   }
+}
+
+/* 分屏编辑器容器样式 */
+.split-editor-content {
+  background-color: var(--editor-bg);
+}
+
+/* 预览区域容器样式 */
+.preview-container {
+  background-color: var(--preview-bg);
 } 

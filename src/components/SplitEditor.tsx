@@ -844,21 +844,21 @@ const cleanupForWechat = (container: HTMLElement) => {
 
 // 复制到公众号的函数 - 标记为未使用但保留接口
 // @ts-ignore - 这个函数未使用但保留接口
-const copyToWechat = async (text: string, html?: string) => {
-  try {
-    console.log('开始复制内容...');
-    return copyToClipboardWithHtml(text, html);
-  } catch (err) {
-    console.error('复制失败:', err);
-    return false;
-  }
-};
+// const copyToWechat = async (text: string, html?: string) => {
+//   try {
+//     console.log('开始复制内容...');
+//     return copyToClipboardWithHtml(text, html);
+//   } catch (err) {
+//     console.error('复制失败:', err);
+//     return false;
+//   }
+// };
 
 // 获取微信公众号友好的HTML - 标记为未使用但保留接口
 // @ts-ignore - 这个函数未使用但保留接口
-const getWechatCleanHtml = (container: HTMLElement): string => {
-  return container.innerHTML;
-};
+// const getWechatCleanHtml = (container: HTMLElement): string => {
+//   return container.innerHTML;
+// };
 
 // 移除多余的空白
 // @ts-ignore - 保留这些函数供将来使用
@@ -899,9 +899,9 @@ const removeExtraWhitespace = (container: HTMLElement) => {
 
 // 提取文本内容 - 标记为未使用但保留接口
 // @ts-ignore - 这个函数未使用但保留接口
-const extractTextContent = (element: HTMLElement): string => {
-  return element.textContent || '';
-};
+// const extractTextContent = (element: HTMLElement): string => {
+//   return element.textContent || '';
+// };
 
 // 彻底清理HTML，确保不产生额外的空白行
 // @ts-ignore - 保留这些函数供将来使用
@@ -2143,20 +2143,10 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
                 <div className="px-4 py-3 h-full">
                   <textarea
                     ref={editorRef}
-                    className="w-full h-full resize-none focus:outline-none whitespace-pre-wrap editor-textarea"
+                    className="editor-textarea"
                     value={content}
                     onChange={handleContentChange}
                     spellCheck={false}
-                    style={{
-                      backgroundColor: '#ffffff',
-                      color: '#37352f',
-                      fontSize: '16px',
-                      lineHeight: '1.5',
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"',
-                      padding: '0',
-                      letterSpacing: '-0.1px',
-                      overflow: 'auto'
-                    }}
                   />
                 </div>
               </div>
@@ -2164,8 +2154,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
             
             {(viewMode === 'split' || viewMode === 'preview' || readOnly) && (
               <div 
-                className={`${readOnly || viewMode === 'preview' ? 'w-full' : 'w-1/2'}`}
-                style={{ backgroundColor: 'var(--preview-bg)' }}
+                className={`${readOnly || viewMode === 'preview' ? 'w-full' : 'w-1/2'} preview-container`}
               >
                 {/* 预览区复制按钮组 */}
                 <div className="sticky top-3 right-3 z-10 flex flex-col space-y-2 float-right opacity-30 hover:opacity-100 transition-opacity duration-300">
@@ -2194,17 +2183,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
                     <span>{copyStatus.html ? '已复制' : 'HTML'}</span>
                   </button>
                 </div>
-                <div 
-                  className="px-4 py-3 pb-8 space-y-4 markdown-content" 
-                  style={{
-                    ...themeStyles,
-                    fontSize: '16px',
-                    lineHeight: '1.5',
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"',
-                    color: '#37352f',
-                    letterSpacing: '-0.1px'
-                  }}
-                >
+                <div className="markdown-content">
                   {renderedContent}
                 </div>
               </div>
