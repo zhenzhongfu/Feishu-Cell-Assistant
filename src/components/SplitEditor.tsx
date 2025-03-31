@@ -241,6 +241,9 @@ interface SplitEditorProps {
   fieldId?: string;
   isBitable?: boolean;
   style?: ThemeStyle;  // 修改为使用ThemeStyle类型
+  isAutoSaveEnabled?: boolean;  // 添加自动保存属性
+  onThemeChange?: (theme: ThemeStyle) => void;  // 添加主题变更回调
+  onAutoSaveChange?: (autoSave: boolean) => void;  // 添加自动保存设置变更回调
 }
 
 // 用于从数学公式元素中提取TeX内容的辅助函数
@@ -453,7 +456,7 @@ const renderTexToImage = async (tex: string, displayMode: boolean): Promise<HTML
 // @ts-ignore - 保留这些函数供将来使用
 const processHtmlForWechat = async (html: string) => {
   // 简化为空函数，仅保留接口
-  return html;
+      return html;
 };
 
 // 复制到剪贴板的通用函数
@@ -668,7 +671,7 @@ const processWechatLists = (container: HTMLElement) => {
       item.appendChild(marker);
       
       // 创建内容容器
-      const contentSpan = document.createElement('span');
+        const contentSpan = document.createElement('span');
       contentSpan.innerHTML = content;
       item.appendChild(contentSpan);
     });
@@ -699,10 +702,10 @@ const processWechatLists = (container: HTMLElement) => {
       const contentSpan = document.createElement('span');
       contentSpan.innerHTML = content;
       item.appendChild(contentSpan);
-    });
-  });
-};
-
+        });
+      });
+    };
+    
 // 为微信公众号处理表格
 const processWechatTables = (container: HTMLElement) => {
   const tables = container.querySelectorAll('table');
@@ -839,7 +842,8 @@ const cleanupForWechat = (container: HTMLElement) => {
   });
 };
 
-// 复制到公众号的函数
+// 复制到公众号的函数 - 标记为未使用但保留接口
+// @ts-ignore - 这个函数未使用但保留接口
 const copyToWechat = async (text: string, html?: string) => {
   try {
     console.log('开始复制内容...');
@@ -850,7 +854,8 @@ const copyToWechat = async (text: string, html?: string) => {
   }
 };
 
-// 获取微信公众号友好的HTML
+// 获取微信公众号友好的HTML - 标记为未使用但保留接口
+// @ts-ignore - 这个函数未使用但保留接口
 const getWechatCleanHtml = (container: HTMLElement): string => {
   return container.innerHTML;
 };
@@ -892,17 +897,10 @@ const removeExtraWhitespace = (container: HTMLElement) => {
   }
 };
 
-// 提取纯文本内容，用于复制
+// 提取文本内容 - 标记为未使用但保留接口
+// @ts-ignore - 这个函数未使用但保留接口
 const extractTextContent = (element: HTMLElement): string => {
-  // 创建一个副本，避免修改原始元素
-  const tempElement = element.cloneNode(true) as HTMLElement;
-  
-  // 移除所有<style>标签
-  const styles = tempElement.querySelectorAll('style');
-  styles.forEach(style => style.remove());
-  
-  // 获取纯文本
-  return tempElement.textContent || '';
+  return element.textContent || '';
 };
 
 // 彻底清理HTML，确保不产生额外的空白行
@@ -1498,7 +1496,10 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
   recordId,
   fieldId,
   isBitable = false,
-  style = 'notion'  // 默认为Notion样式
+  style = 'notion',  // 默认为Notion样式
+  isAutoSaveEnabled = false,  // 添加自动保存属性
+  onThemeChange,  // 添加主题变更回调
+  onAutoSaveChange  // 添加自动保存设置变更回调
 }) => {
   // 状态定义
   const [content, setContent] = useState(initialValue);
@@ -1510,7 +1511,6 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pendingContent, setPendingContent] = useState<string | null>(null);
-  const [isAutoSaveEnabled, setIsAutoSaveEnabled] = useState(false);
   const [currentStyle, setCurrentStyle] = useState<ThemeStyle>(style);  // 使用ThemeStyle类型
   
   // 复制状态
@@ -1529,17 +1529,20 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
   // 生成当前主题的样式 - 移除isDarkMode参数
   const themeStyles = generateThemeStyles(currentStyle);
 
-  // 引用
+  // 记录当前触发滚动的元素
+  const scrollingElement = useRef<'textarea' | 'preview' | null>(null);
+  const isScrolling = useRef(false);
+  const textareaContainerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLTextAreaElement>(null);
-  const editorWrapperRef = useRef<HTMLDivElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  // 引用
   const lastSavedContent = useRef(initialValue);
   const previousRecordId = useRef(recordId);
   const previousFieldId = useRef(fieldId);
   const isInitialMount = useRef(true);
   const isSaving = useRef(false);
-  const isScrolling = useRef(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const previewRef = useRef<HTMLDivElement>(null);
 
   // 监听 initialValue 的变化
   useEffect(() => {
@@ -1870,7 +1873,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
       if (type === 'wechat') {
         alert(`复制到公众号失败: ${err instanceof Error ? err.message : '未知错误'}。可能是因为内容过于复杂，请尝试复制原文后手动处理。`);
       } else {
-        alert('复制失败，请使用快捷键(Ctrl+C)手动复制');
+      alert('复制失败，请使用快捷键(Ctrl+C)手动复制');
       }
     }
   };
@@ -1946,41 +1949,13 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
     }, 0);
   };
 
-  const handleScroll = () => {
-    if (isScrolling.current) return;
-    isScrolling.current = true;
-    
-    if (textareaRef.current && previewRef.current) {
-      const textarea = textareaRef.current;
-      const preview = previewRef.current;
-      
-      const percent = textarea.scrollTop / (textarea.scrollHeight - textarea.clientHeight);
-      const previewTarget = percent * (preview.scrollHeight - preview.clientHeight);
-      
-      preview.scrollTop = previewTarget;
-    }
-    
-    setTimeout(() => {
-      isScrolling.current = false;
-    }, 20);
-  };
-
-  useEffect(() => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.addEventListener('scroll', handleScroll);
-      return () => {
-        textarea.removeEventListener('scroll', handleScroll);
-      };
-    }
-  }, []);
-
   // 切换样式
   const toggleStyle = () => {
     const newStyle = currentStyle === 'github' ? 'notion' : 'github';
     setCurrentStyle(newStyle);
     // 更新body的data-theme属性
     document.body.setAttribute('data-theme', newStyle);
+    onThemeChange?.(newStyle);
   };
 
   // 初始化时设置主题
@@ -1989,55 +1964,70 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
     document.body.setAttribute('data-theme', currentStyle);
   }, []);
 
+  useEffect(() => {
+    onAutoSaveChange?.(isAutoSaveEnabled);
+  }, [isAutoSaveEnabled, onAutoSaveChange]);
+
+  useEffect(() => {
+    // 处理滚动同步
+    if (viewMode !== 'split') return;
+    
+    return () => {};
+  }, [viewMode]);
+
   return (
-    <div className="flex flex-col w-full h-full min-h-split rounded-lg overflow-hidden bg-white border border-gray-200/80">
-      <div className="flex-none">
-        <div className="flex justify-between items-center px-4 py-2 h-12 bg-white/80 backdrop-blur-sm border-b border-gray-200/80">
-          <div className="flex items-center gap-2">
+    <div className="flex flex-col h-full w-full overflow-hidden bg-white">
+      {/* 固定在顶部的工具栏 */}
+      <div className="sticky top-0 z-50 bg-white shadow-sm">
+        <div className="flex justify-between items-center px-2 sm:px-4 py-2 h-12 bg-white border-b border-gray-200/80">
+          <div className="flex items-center gap-1 sm:gap-2">
             <div className="flex items-center bg-gray-200 rounded-md p-0.5">
               <button
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold transition-all duration-200 ${
+                className={`flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-md text-sm font-semibold transition-all duration-200 ${
                   viewMode === 'edit'
                     ? 'bg-white text-blue-700 shadow-sm border border-gray-300'
                     : 'text-gray-900 hover:text-black hover:bg-gray-100'
-                  }`}
+                }`}
                 onClick={() => setViewMode('edit')}
+                title="编辑模式"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                 </svg>
-                编辑
+                <span className="hidden sm:inline">编辑</span>
               </button>
               <button
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold transition-all duration-200 ${
+                className={`flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-md text-sm font-semibold transition-all duration-200 ${
                   viewMode === 'split'
                     ? 'bg-white text-blue-700 shadow-sm border border-gray-300'
                     : 'text-gray-900 hover:text-black hover:bg-gray-100'
-                  }`}
+                }`}
                 onClick={() => setViewMode('split')}
+                title="分屏模式"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
                 </svg>
-                分屏
+                <span className="hidden sm:inline">分屏</span>
               </button>
               <button
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold transition-all duration-200 ${
+                className={`flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-md text-sm font-semibold transition-all duration-200 ${
                   viewMode === 'preview'
                     ? 'bg-white text-blue-700 shadow-sm border border-gray-300'
                     : 'text-gray-900 hover:text-black hover:bg-gray-100'
-                  }`}
+                }`}
                 onClick={() => setViewMode('preview')}
+                title="预览模式"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
-                预览
+                <span className="hidden sm:inline">预览</span>
               </button>
             </div>
             <button
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold transition-all duration-200
+              className={`flex items-center justify-center w-8 h-8 rounded-md text-sm font-semibold transition-all duration-200
                 ${isToolbarExpanded 
                   ? 'bg-gray-100 text-gray-900' 
                   : 'text-gray-900 hover:text-black hover:bg-gray-100/80'}`}
@@ -2053,47 +2043,56 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
-            {/* 添加样式切换按钮 */}
+            {/* 重新设计的样式切换按钮 */}
             <button
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold transition-all duration-200 text-gray-900 hover:text-black hover:bg-gray-100/80"
+              className={`flex items-center justify-center w-8 h-8 rounded-md text-sm font-semibold transition-all duration-200 
+                ${currentStyle === 'github' 
+                  ? 'bg-blue-50 text-blue-700 hover:bg-blue-100' 
+                  : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'}`}
               onClick={toggleStyle}
               title={`切换到${currentStyle === 'github' ? 'Notion' : 'GitHub'}样式`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
               </svg>
-              {currentStyle === 'github' ? 'GitHub' : 'Notion'}样式
             </button>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-1 sm:space-x-3">
             <button
-              className="hidden flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold transition-all duration-200 text-gray-900 hover:text-black hover:bg-gray-100/80"
-              onClick={() => handleToolbarAction('export-pdf')}
-              title="导出 PDF"
+              className={`flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm font-semibold ${
+                isAutoSaveEnabled
+                  ? 'bg-green-50 text-green-700 border border-green-200'
+                  : 'bg-gray-50 text-gray-600 border border-gray-200'
+              } transition-all duration-200`}
+              onClick={() => onAutoSaveChange?.(!isAutoSaveEnabled)}
+              title="自动保存"
             >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={isAutoSaveEnabled ? 2.5 : 1.5} 
+                  d={isAutoSaveEnabled 
+                    ? "M5 13l4 4L19 7" 
+                    : "M17 16v2a2 2 0 01-2 2H5a2 2 0 01-2-2v-7a2 2 0 012-2h2m3-4H9a2 2 0 00-2 2v7a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-1m-1 4l-3 3m0 0l-3-3m3 3V3"} 
+                />
               </svg>
-              导出PDF
+              <span className="hidden sm:inline">{isAutoSaveEnabled ? '已开启自动' : '自动'}保存</span>
+              <span className="inline sm:hidden">{isAutoSaveEnabled ? '自动' : '手动'}</span>
             </button>
-            <label className="flex items-center space-x-2 text-sm font-semibold text-gray-900">
-              <input
-                type="checkbox"
-                className="form-checkbox h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                checked={isAutoSaveEnabled}
-                onChange={(e) => setIsAutoSaveEnabled(e.target.checked)}
-              />
-              <span>自动保存</span>
-            </label>
             <button
-              className={`px-3 py-1.5 text-sm font-semibold rounded-md transition-all duration-200
+              className={`px-2 sm:px-3 py-1.5 text-sm font-semibold rounded-md transition-all duration-200
                 ${saveStatus === 'changed' 
                   ? 'bg-blue-700 text-white hover:bg-blue-800 animate-pulse-save shadow-md' 
-                  : 'bg-gray-100 text-gray-900 hover:bg-gray-200'}`}
+                  : saveStatus === 'saving'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
               onClick={handleSaveClick}
               disabled={saveStatus === 'saving'}
             >
-              {saveStatus === 'saving' ? '保存中...' : '保存'}
+              {saveStatus === 'saving' 
+                ? '保存中...' 
+                : saveStatus === 'changed' 
+                  ? <>{<span className="hidden sm:inline">保存更改</span>}{<span className="inline sm:hidden">保存</span>}</>
+                  : <>{<span className="hidden sm:inline">已保存</span>}{<span className="inline sm:hidden">✓</span>}</>
+              }
             </button>
           </div>
         </div>
@@ -2111,67 +2110,109 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
         </div>
       )}
 
-      <div className="flex flex-auto min-h-[calc(100vh-12rem)] overflow-hidden mb-8">
-        {(viewMode === 'edit' || viewMode === 'split') && !readOnly && (
-          <div className={`flex flex-col flex-auto min-h-full relative ${viewMode === 'split' ? 'w-1/2' : 'w-full'} border-r border-split-border`} ref={editorWrapperRef}>
-            {/* 编辑区复制按钮 */}
-            <button
-              className={`absolute right-3 top-3 z-10 px-2.5 py-1.5 text-xs rounded font-semibold bg-gray-800 hover:bg-gray-700 text-white transition-colors ${
-                copyStatus.edit ? 'bg-green-700 hover:bg-green-600' : ''
-              }`}
-              onClick={() => handleCopy('edit')}
-              title="复制 Markdown 源码"
+      {/* 内容区域 */}
+      <div className="relative flex flex-1 overflow-hidden split-editor-content">
+        {/* 滚动容器 */}
+        <div 
+          className={`absolute inset-0 ${viewMode === 'edit' ? 'overflow-hidden' : 'overflow-auto'}`}
+          ref={previewRef}
+        >
+          {/* 内容包装器 - 确保内容能完整显示 */}
+          <div className="min-h-full w-full flex">
+            {(viewMode === 'edit' || viewMode === 'split') && !readOnly && (
+              <div 
+                className={`${viewMode === 'split' ? 'w-1/2' : 'w-full'} relative`}
+                ref={textareaContainerRef}
+                id="editor-container"
               >
-              {copyStatus.edit ? '已复制' : '复制'}
-            </button>
-            <textarea
-              ref={editorRef}
-              className="flex-auto w-full min-h-full px-4 py-3 bg-split-editor text-split-text resize-none focus:outline-none overflow-auto whitespace-pre-wrap"
-              value={content}
-              onChange={handleContentChange}
-              spellCheck={false}
-              style={{ 
-                overflowY: 'auto',
-                backgroundColor: 'var(--editor-bg)', // 应用主题的编辑区背景色
-                color: '#37352f', // Notion风格的文字颜色
-                fontSize: '15px',
-                lineHeight: '1.6'
-              }}
-            />
+                {/* 编辑区复制按钮 */}
+                <button
+                  className={`sticky top-3 right-3 z-10 px-2 py-1.5 text-xs rounded-md font-semibold float-right
+                    ${copyStatus.edit 
+                      ? 'bg-green-700 hover:bg-green-600 text-white' 
+                      : 'bg-gray-800/90 hover:bg-gray-700 text-white'} 
+                    transition-colors shadow-sm backdrop-blur-sm opacity-30 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center`}
+                  onClick={() => handleCopy('edit')}
+                  title="复制 Markdown 源码"
+                >
+                  <svg className="w-3.5 h-3.5 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span>{copyStatus.edit ? '已复制' : '复制'}</span>
+                </button>
+                <div className="px-4 py-3 h-full">
+                  <textarea
+                    ref={editorRef}
+                    className="w-full h-full resize-none focus:outline-none whitespace-pre-wrap editor-textarea"
+                    value={content}
+                    onChange={handleContentChange}
+                    spellCheck={false}
+                    style={{
+                      backgroundColor: '#ffffff',
+                      color: '#37352f',
+                      fontSize: '16px',
+                      lineHeight: '1.5',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"',
+                      padding: '0',
+                      letterSpacing: '-0.1px',
+                      overflow: 'auto'
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+            
+            {(viewMode === 'split' || viewMode === 'preview' || readOnly) && (
+              <div 
+                className={`${readOnly || viewMode === 'preview' ? 'w-full' : 'w-1/2'}`}
+                style={{ backgroundColor: 'var(--preview-bg)' }}
+              >
+                {/* 预览区复制按钮组 */}
+                <div className="sticky top-3 right-3 z-10 flex flex-col space-y-2 float-right opacity-30 hover:opacity-100 transition-opacity duration-300">
+                  <button
+                    className={`px-2 py-1.5 text-xs rounded-md font-semibold shadow-sm ${
+                      copyStatus.preview ? 'bg-green-700 hover:bg-green-600 text-white' : 'bg-gray-800/90 hover:bg-gray-700 text-white'
+                    } backdrop-blur-sm transition-colors flex items-center justify-center`}
+                    onClick={() => handleCopy('preview')}
+                    title="复制原始格式内容"
+                  >
+                    <svg className="w-3.5 h-3.5 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                    </svg>
+                    <span>{copyStatus.preview ? '已复制' : '复制'}</span>
+                  </button>
+                  <button
+                    className={`px-2 py-1.5 text-xs rounded-md font-semibold shadow-sm ${
+                      copyStatus.html ? 'bg-green-700 hover:bg-green-600 text-white' : 'bg-purple-800/90 hover:bg-purple-700 text-white'
+                    } backdrop-blur-sm transition-colors flex items-center justify-center`}
+                    onClick={() => handleCopy('html')}
+                    title="复制HTML源代码"
+                  >
+                    <svg className="w-3.5 h-3.5 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                    </svg>
+                    <span>{copyStatus.html ? '已复制' : 'HTML'}</span>
+                  </button>
+                </div>
+                <div 
+                  className="px-4 py-3 pb-8 space-y-4 markdown-content" 
+                  style={{
+                    ...themeStyles,
+                    fontSize: '16px',
+                    lineHeight: '1.5',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"',
+                    color: '#37352f',
+                    letterSpacing: '-0.1px'
+                  }}
+                >
+                  {renderedContent}
+                </div>
+              </div>
+            )}
           </div>
-        )}
-        
-        {(viewMode === 'split' || viewMode === 'preview' || readOnly) && (
-          <div className={`flex flex-col flex-auto min-h-full relative ${readOnly || viewMode === 'preview' ? 'w-full' : 'w-1/2'} overflow-auto bg-white`} style={{ backgroundColor: 'var(--preview-bg)' }}> {/* 应用主题的预览区背景色 */}
-            {/* 预览区复制按钮组 */}
-            <div className="absolute right-3 top-3 z-10 flex space-x-2">
-              <button
-                className={`px-2.5 py-1.5 text-xs rounded-md font-semibold bg-gray-800 hover:bg-gray-700 text-white transition-colors ${
-                  copyStatus.preview ? 'bg-green-700 hover:bg-green-600' : ''
-                }`}
-                onClick={() => handleCopy('preview')}
-                title="复制原始格式内容"
-              >
-                {copyStatus.preview ? '已复制' : '复制原文'}
-              </button>
-              <button
-                className={`px-2.5 py-1.5 text-xs rounded-md font-semibold bg-purple-800 hover:bg-purple-700 text-white transition-colors ${
-                  copyStatus.html ? 'bg-green-700 hover:bg-green-600' : ''
-                }`}
-                onClick={() => handleCopy('html')}
-                title="复制HTML源代码"
-              >
-                {copyStatus.html ? '已复制' : '复制HTML'}
-              </button>
-              {/* 隐藏复制到公众号按钮 */}
-            </div>
-            <div className="flex-auto min-h-full px-4 py-3 space-y-4 text-gray-900 markdown-content" style={themeStyles}>
-              {renderedContent}
-            </div>
-          </div>
-        )}
+        </div>
       </div>
-
+      
       <Modal
         isOpen={isModalOpen}
         onClose={handleModalClose}

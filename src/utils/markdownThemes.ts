@@ -50,42 +50,42 @@ interface ThemeVariables {
 // 主题定义 - 移除dark主题部分
 const githubTheme: ThemeVariables = {
   // 标题样式
-  headingColor: '#24292f',
-  headingBorderColor: '#d0d7de',
+  headingColor: '#0f1417',
+  headingBorderColor: '#bdc4cc',
   
   // 文本和链接样式
-  textColor: '#24292f',
-  linkColor: '#0969da',
-  linkHoverColor: '#0550AE',
+  textColor: '#1a1f24',
+  linkColor: '#0366d6',
+  linkHoverColor: '#0246a2',
   
   // 代码块样式
-  codeBg: '#f6f8fa',
-  codeBorder: '#d0d7de',
-  codeText: '#24292f',
-  inlineCodeBg: '#f6f8fa',
-  inlineCodeText: '#24292f',
+  codeBg: '#f0f4f8',
+  codeBorder: '#bdc4cc',
+  codeText: '#1a1f24',
+  inlineCodeBg: '#f0f4f8',
+  inlineCodeText: '#d73a49',
   
   // 引用块样式
-  blockquoteBg: '#f6f8fa',
-  blockquoteBorder: '#d0d7de',
-  blockquoteText: '#57606a',
+  blockquoteBg: '#f0f4f8',
+  blockquoteBorder: '#bdc4cc',
+  blockquoteText: '#3a434e',
   
   // 表格样式
-  tableBorder: '#d0d7de',
-  tableHeaderBg: '#f6f8fa',
+  tableBorder: '#bdc4cc',
+  tableHeaderBg: '#e7ecf2',
   tableOddRowBg: '#ffffff',
   tableEvenRowBg: '#f6f8fa',
   
   // 提示框样式
-  noteBorder: '#0969da',
-  noteBg: '#ddf4ff',
-  tipBorder: '#1a7f37',
+  noteBorder: '#0366d6',
+  noteBg: '#dbedff',
+  tipBorder: '#2da44e',
   tipBg: '#dafbe1',
   importantBorder: '#9a6700',
   importantBg: '#fff8c5',
   warningBorder: '#bd5f00',
   warningBg: '#fff1e5',
-  cautionBorder: '#d1242f',
+  cautionBorder: '#cf222e',
   cautionBg: '#ffebe9',
 
   // 编辑区和预览区背景颜色
@@ -96,47 +96,47 @@ const githubTheme: ThemeVariables = {
 // Notion主题
 const notionTheme: ThemeVariables = {
   // 标题样式
-  headingColor: '#37352f',
-  headingBorderColor: '#e3e2e0',
+  headingColor: '#121212',
+  headingBorderColor: '#d9d8d4',
   
   // 文本和链接样式
-  textColor: '#37352f',
-  linkColor: '#2eaadc',
-  linkHoverColor: '#0b85a1',
+  textColor: '#1f1f1f', 
+  linkColor: '#0b76b8',
+  linkHoverColor: '#085d92',
   
   // 代码块样式
-  codeBg: '#f7f6f3',
-  codeBorder: '#e3e2e0',
-  codeText: '#37352f',
-  inlineCodeBg: '#f0f0f0',
-  inlineCodeText: '#37352f',
+  codeBg: '#f5f4f0',
+  codeBorder: '#d9d8d4',
+  codeText: '#1f1f1f',
+  inlineCodeBg: '#ebeae6',
+  inlineCodeText: '#ca3323',
   
   // 引用块样式
-  blockquoteBg: '#f7f6f3',
-  blockquoteBorder: '#e3e2e0',
-  blockquoteText: '#6b6a67',
+  blockquoteBg: '#f5f4f0',
+  blockquoteBorder: '#d9d8d4',
+  blockquoteText: '#4f4e49',
   
   // 表格样式
-  tableBorder: '#e3e2e0',
-  tableHeaderBg: '#f7f6f3',
+  tableBorder: '#d9d8d4',
+  tableHeaderBg: '#f0efe9',
   tableOddRowBg: '#ffffff',
-  tableEvenRowBg: '#f7f6f3',
+  tableEvenRowBg: '#fafaf8',
   
   // 提示框样式
-  noteBorder: '#2eaadc',
-  noteBg: '#f0faff',
-  tipBorder: '#0f9d58',
-  tipBg: '#e6f9ef',
-  importantBorder: '#f5b400',
-  importantBg: '#fff9e8',
-  warningBorder: '#f5a623',
-  warningBg: '#fff4e6',
-  cautionBorder: '#eb5757',
-  cautionBg: '#fdebeb',
+  noteBorder: '#0b76b8',
+  noteBg: '#e8f3fa',
+  tipBorder: '#158342',
+  tipBg: '#e2f5ec',
+  importantBorder: '#ad7c14',
+  importantBg: '#fcf6de',
+  warningBorder: '#ad5700',
+  warningBg: '#fdf1e3',
+  cautionBorder: '#c22f39',
+  cautionBg: '#fcecec',
 
   // 编辑区和预览区背景颜色
-  editorBg: '#f9f5d7',  // 更深更温暖的奶油色背景
-  previewBg: '#ffffff'  // Notion预览区白色背景
+  editorBg: '#fffff7',
+  previewBg: '#ffffff'
 };
 
 // 主题集合

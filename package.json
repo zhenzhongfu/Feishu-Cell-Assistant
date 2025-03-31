@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "飞书多维表格 Markdown 字段插件",
   "main": "src/index.tsx",
+  "output": "dist",
   "scripts": {
     "dev": "vite",
     "start": "vite",

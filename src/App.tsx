@@ -6,6 +6,7 @@ import { isInBitableEnvironment, getCellValue, setCellValue } from './utils/bita
 import ScrollToTop from './components/ScrollToTop';
 import './styles/tailwind.css';
 import './styles/markdownBase.css';
+import { ThemeStyle } from './utils/markdownThemes';
 
 // 示例Markdown内容
 const exampleMarkdown = `# Markdown单元格助手
@@ -81,12 +82,26 @@ const App: React.FC = () => {
   const [recordId, setRecordId] = useState<string | undefined>();
   const [fieldId, setFieldId] = useState<string | undefined>();
   const [isBitable, setIsBitable] = useState(false);
+  const [themeStyle, setThemeStyle] = useState<ThemeStyle>('github'); // 默认主题
+  const [isAutoSave, setIsAutoSave] = useState(false); // 默认不自动保存
   
-  // 从localStorage加载内容
+  // 从localStorage加载内容和设置
   useEffect(() => {
     const savedContent = localStorage.getItem('markdownContent');
     if (savedContent) {
       setContent(savedContent);
+    }
+
+    // 加载保存的主题设置
+    const savedTheme = localStorage.getItem('markdownTheme') as ThemeStyle | null;
+    if (savedTheme && (savedTheme === 'github' || savedTheme === 'notion')) {
+      setThemeStyle(savedTheme);
+    }
+
+    // 加载保存的自动保存设置
+    const savedAutoSave = localStorage.getItem('markdownAutoSave');
+    if (savedAutoSave) {
+      setIsAutoSave(savedAutoSave === 'true');
     }
 
     // 如果在多维表格环境中，监听选择变化
@@ -276,38 +291,46 @@ const App: React.FC = () => {
     checkEnvironment();
   }, []);
 
-  // 设置默认主题为notion
+  // 处理主题样式变更
+  const handleThemeChange = (newTheme: ThemeStyle) => {
+    setThemeStyle(newTheme);
+    localStorage.setItem('markdownTheme', newTheme);
+    document.body.setAttribute('data-theme', newTheme);
+  };
+
+  // 处理自动保存设置变更
+  const handleAutoSaveChange = (autoSave: boolean) => {
+    setIsAutoSave(autoSave);
+    localStorage.setItem('markdownAutoSave', String(autoSave));
+  };
+
+  // 设置默认主题
   useEffect(() => {
-    document.body.setAttribute('data-theme', 'notion');
-  }, []);
+    document.body.setAttribute('data-theme', themeStyle);
+  }, [themeStyle]);
 
   return (
-    <div className="min-h-screen bg-[#ffffff]">
-      <header className={`sticky top-0 z-30 transition-all duration-300 ease-in-out
-        ${isScrolled 
-          ? 'py-2 bg-white/95 shadow-sm' 
-          : 'py-4 bg-white/80'} 
-        backdrop-blur-sm border-b border-gray-200/80`}>
+    <div className="flex flex-col h-screen overflow-hidden bg-[#ffffff]">
+      <header className="flex-none sticky top-0 z-30 py-2 bg-white shadow-sm border-b border-gray-200/80">
         <div className="flex items-center justify-between px-6">
           <div className="flex items-center gap-3">
-            <div className={`flex items-center gap-2 transition-all duration-300 ${isScrolled ? 'scale-90 -translate-x-1' : ''}`}>
-              <svg className={`transition-all duration-300 ${isScrolled ? 'w-6 h-6' : 'w-8 h-8'} text-gray-800`} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <div className="flex items-center gap-2">
+              <svg className={`w-6 h-6 ${themeStyle === 'github' ? 'text-blue-700' : 'text-indigo-700'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <h1 className={`tracking-tight font-semibold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600
-                transition-all duration-300 ${isScrolled ? 'text-lg' : 'text-[22px]'}`}>
-                Markdown助手
+              <h1 className={`tracking-tight font-semibold bg-clip-text text-transparent bg-gradient-to-r ${themeStyle === 'github' ? 'from-blue-800 to-blue-600' : 'from-indigo-800 to-indigo-600'} text-lg`}>
+                Markdown编辑助手
               </h1>
             </div>
           </div>
           <div className="flex items-center gap-3">
             {!isBitable && (
               <button 
-                className={`group flex items-center gap-1.5 text-sm text-gray-600 
+                className="group flex items-center gap-1.5 text-sm text-gray-600 
                   bg-white hover:bg-gray-50 
                   border border-gray-200 hover:border-gray-300
                   rounded-md transition-all duration-200 shadow-sm
-                  ${isScrolled ? 'px-2.5 py-1' : 'px-3 py-1.5'}`}
+                  px-2.5 py-1"
                 onClick={handleFormat}
                 title="美化整个文档的格式"
               >
@@ -320,12 +343,10 @@ const App: React.FC = () => {
             )}
           </div>
         </div>
-        <p className={`text-[13px] text-gray-500 font-medium px-6
-          transition-all duration-300 overflow-hidden
-          ${isScrolled ? 'h-0 opacity-0 mt-0' : 'h-auto opacity-100 mt-2'}`}>
+        <p className="text-[13px] text-gray-500 font-medium px-6 mt-2">
           {isBitable 
-            ? '在飞书多维表格中使用此扩展编辑Markdown单元格' 
-            : '此应用用于编辑和预览Markdown文本'}
+            ? '在飞书多维表格中使用Markdown格式编辑和预览文本内容' 
+            : '高效编辑Markdown文本，支持GitHub和Notion双主题预览'}
         </p>
         {formatStatus && (
           <div className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full
@@ -353,36 +374,49 @@ const App: React.FC = () => {
         )}
       </header>     
 
-      <main className="flex-1">
+      <main className="flex-1 overflow-hidden">
         {isBitable ? (
-          <div className="bitable-editor-container">
+          <div className="bitable-editor-container h-full overflow-hidden">
             {recordId && fieldId ? (
               <SplitEditor 
                 initialValue={content}
                 onSave={handleSave}
                 recordId={recordId}
                 fieldId={fieldId}
+                style={themeStyle}
+                isAutoSaveEnabled={isAutoSave}
+                onThemeChange={handleThemeChange}
+                onAutoSaveChange={handleAutoSaveChange}
               />
             ) : (
-              <div className="bg-notice-bg rounded-lg p-6 m-5 text-notice-text text-[15px] leading-relaxed shadow-sm">
-                <p className="text-notice-hint text-sm">提示：点击任意文本类型的字段以查看或编辑其Markdown内容</p>
+              <div className="bg-notice-bg rounded-lg p-6 m-5 text-notice-text text-[15px] leading-relaxed shadow-sm border border-indigo-200">
+                <p className="flex items-center text-notice-hint text-sm font-medium">
+                  <svg className="w-5 h-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  提示：点击任意文本类型的字段以查看或编辑其Markdown内容
+                </p>
               </div>
             )}
           </div>
         ) : (
           <>
-            <div className="h-editor min-h-editor w-full flex box-border md:h-editor-mobile">
+            <div className="h-full w-full flex box-border">
               <SplitEditor 
                 initialValue={content}
                 onSave={handleSave}
+                style={themeStyle}
+                isAutoSaveEnabled={isAutoSave}
+                onThemeChange={handleThemeChange}
+                onAutoSaveChange={handleAutoSaveChange}
               />
             </div>
           </>
         )}
       </main>
       <ScrollToTop />
-      <footer className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200/80 z-[1000] p-0 m-0 box-border">
-        <p className="m-0 py-2 text-xs text-gray-500 text-center font-normal">Markdown助手 v1.0.0</p>
+      <footer className="flex-none bg-white/80 backdrop-blur-sm border-t border-gray-200/80 z-[1000] p-0 m-0 box-border">
+        <p className="m-0 py-2 text-xs text-gray-500 text-center font-normal">Markdown编辑助手 v1.0.1</p>
       </footer>
     </div>
   );

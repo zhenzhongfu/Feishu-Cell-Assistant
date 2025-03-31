@@ -1,121 +1,181 @@
-/* Markdown基础样式 */
-.markdown-content {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
-  font-size: 16px;
-  line-height: 1.6;
-  word-wrap: break-word;
-  background-color: var(--preview-bg); /* 预览区背景 */
+/* 主题变量定义 */
+:root {
+  /* 基础变量 */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+  --font-size: 16px;
+  --line-height: 1.6;
+  
+  /* 默认主题颜色 - 编辑区 */
+  --editor-bg: #ffffff;
+  --editor-text: #1f1f1f;
+  --editor-border: #e1e4e8;
+  --editor-font-size: var(--font-size);
+  --editor-padding: 20px 40px 20px 20px;
+  
+  /* 默认主题颜色 - 预览区 */
+  --preview-bg: #ffffff;
+  --preview-text: #1f1f1f;
+  --preview-heading: #121212;
+  --preview-link: #0366d6;
+  --preview-link-hover: #0246a2;
+  --preview-code-bg: #f6f8fa;
+  --preview-code-text: #24292e;
+  --preview-code-border: #e1e4e8;
+  --preview-inline-code-bg: #f6f8fa;
+  --preview-blockquote-bg: #f6f8fa;
+  --preview-blockquote-border: #dfe2e5;
+  --preview-blockquote-text: #6a737d;
+  --preview-table-border: #dfe2e5;
+  --preview-table-header-bg: #f6f8fa;
+  --preview-table-odd-row-bg: #ffffff;
+  --preview-table-even-row-bg: #f6f8fa;
+  --preview-border: #e1e4e8;
 }
 
-/* Notion整体页面样式 */
+/* Notion主题变量 */
 body[data-theme="notion"] {
-  background-color: #f7f6f3;
+  /* 编辑区样式 */
+  --editor-bg: #ffffff;
+  --editor-text: #1f1f1f;
+  --editor-border: #d9d8d4;
+  --editor-font-size: 13px;
+
+  /* 预览区样式 */
+  --preview-bg: #ffffff;
+  --preview-text: #1f1f1f;
+  --preview-heading: #121212;
+  --preview-link: #0b76b8;
+  --preview-link-hover: #085d92;
+  --preview-code-bg: #f5f4f0;
+  --preview-code-text: #ca3323;
+  --preview-code-border: #d9d8d4;
+  --preview-inline-code-bg: #ebeae6;
+  --preview-blockquote-bg: #f5f4f0;
+  --preview-blockquote-border: #d9d8d4;
+  --preview-blockquote-text: #4f4e49;
+  --preview-table-border: #d9d8d4;
+  --preview-table-header-bg: #f0efe9;
+  --preview-table-odd-row-bg: #ffffff;
+  --preview-table-even-row-bg: #fafaf8;
+  --preview-border: #d9d8d4;
+  
+  /* 整体背景色 */
+  background-color: #f3f2ef;
 }
 
-/* Notion特有编辑区样式 */
-body[data-theme="notion"] textarea {
-  background-color: var(--editor-bg) !important; /* Notion编辑器背景 */
-  border-right: 1px solid #e3e2e0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: 16px;
-  color: #37352f;
-  line-height: 1.5;
-  padding: 20px !important;
+/* GitHub主题变量 */
+body[data-theme="github"] {
+  /* 编辑区样式 */
+  --editor-bg: #ffffff;
+  --editor-text: #1a1f24;
+  --editor-border: #bdc4cc;
+
+  /* 预览区样式 */
+  --preview-bg: #ffffff;
+  --preview-text: #1a1f24;
+  --preview-heading: #0f1417;
+  --preview-link: #0366d6;
+  --preview-link-hover: #0246a2;
+  --preview-code-bg: #f0f4f8;
+  --preview-code-text: #d73a49;
+  --preview-code-border: #bdc4cc;
+  --preview-inline-code-bg: #f0f4f8;
+  --preview-blockquote-bg: #f0f4f8;
+  --preview-blockquote-border: #bdc4cc;
+  --preview-blockquote-text: #3a434e;
+  --preview-table-border: #bdc4cc;
+  --preview-table-header-bg: #e7ecf2;
+  --preview-table-odd-row-bg: #ffffff;
+  --preview-table-even-row-bg: #f6f8fa;
+  --preview-border: #bdc4cc;
+  
+  /* 整体背景色 */
+  background-color: #f0f6fc;
 }
 
-/* Notion特有预览区样式 */
-body[data-theme="notion"] .markdown-content {
-  color: #2e2d29;
+/* 编辑区基础样式 */
+textarea.editor-textarea {
+  font-family: var(--font-family);
+  font-size: var(--editor-font-size);
+  line-height: var(--line-height);
+  color: var(--editor-text);
+  background-color: var(--editor-bg);
+  padding: var(--editor-padding);
+  width: 100%;
+  height: 100%;
+  resize: none;
+  outline: none;
+  white-space: pre-wrap;
+  overflow: auto;
+}
+
+/* 编辑区容器样式 */
+#editor-container {
+  background-color: var(--editor-bg);
+  border-right: 1px solid var(--editor-border);
+}
+
+/* Markdown预览区基础样式 */
+.markdown-content {
+  font-family: var(--font-family);
+  font-size: var(--font-size);
+  line-height: var(--line-height);
+  word-wrap: break-word;
+  color: var(--preview-text);
   background-color: var(--preview-bg);
   padding: 20px 24px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  letter-spacing: -0.01em;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  border-radius: 3px;
-}
-
-/* Notion特有段落样式 */
-body[data-theme="notion"] .markdown-content p {
-  color: #2e2d29;
-  margin: 0.8em 0;
-  line-height: 1.5;
-}
-
-/* GitHub特有编辑区样式 */
-body[data-theme="github"] textarea {
-  background-color: var(--editor-bg) !important; /* GitHub编辑器背景 */
-  border-right: 1px solid #d0d7de;
-}
-
-/* GitHub特有预览区样式 */
-body[data-theme="github"] .markdown-content {
-  color: var(--text-color);
-  background-color: var(--preview-bg);
 }
 
 /* 标题样式 */
-.markdown-content h1 {
-  color: var(--heading-color);
-  border-bottom: 1px solid var(--heading-border-color);
-  padding-bottom: 0.3em;
-  font-size: 2em;
-  font-weight: 600;
-  margin-top: 1.5em;
-  margin-bottom: 1em;
-}
-
-.markdown-content h2 {
-  color: var(--heading-color);
-  border-bottom: 1px solid var(--heading-border-color);
-  padding-bottom: 0.3em;
-  font-size: 1.5em;
-  font-weight: 600;
-  margin-top: 1.25em;
-  margin-bottom: 0.75em;
-}
-
-.markdown-content h3 {
-  color: var(--heading-color);
-  font-size: 1.25em;
-  font-weight: 600;
-  margin-top: 1.25em;
-  margin-bottom: 0.75em;
-}
-
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
 .markdown-content h4,
 .markdown-content h5,
 .markdown-content h6 {
-  color: var(--heading-color);
+  color: var(--preview-heading);
   font-weight: 600;
-  margin-top: 1em;
-  margin-bottom: 0.5em;
+  margin-top: 1.5em;
+  margin-bottom: 1em;
+  letter-spacing: -0.01em;
 }
 
+.markdown-content h1,
+.markdown-content h2 {
+  border-bottom: 1px solid var(--preview-border);
+  padding-bottom: 0.3em;
+}
+
+.markdown-content h1 { font-size: 2em; }
+.markdown-content h2 { font-size: 1.5em; }
+.markdown-content h3 { font-size: 1.25em; }
 .markdown-content h4 { font-size: 1.1em; }
 .markdown-content h5 { font-size: 0.9em; }
 .markdown-content h6 { font-size: 0.85em; }
 
 /* 段落样式 */
 .markdown-content p {
-  color: var(--text-color);
+  color: var(--preview-text);
   margin: 0.75em 0;
+  line-height: var(--line-height);
 }
 
 /* 链接样式 */
 .markdown-content a {
-  color: var(--link-color);
+  color: var(--preview-link);
   text-decoration: none;
+  font-weight: 500;
 }
 
 .markdown-content a:hover {
-  color: var(--link-hover-color);
+  color: var(--preview-link-hover);
   text-decoration: underline;
 }
 
-/* 代码块样式 */
+/* 代码样式 */
 .markdown-content pre {
-  background-color: var(--code-bg);
-  border: 1px solid var(--code-border);
+  background-color: var(--preview-code-bg);
+  border: 1px solid var(--preview-code-border);
   border-radius: 6px;
   padding: 1em;
   margin: 1em 0;
@@ -125,22 +185,22 @@ body[data-theme="github"] .markdown-content {
 .markdown-content code {
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
   font-size: 0.9em;
-  color: var(--code-text);
+  color: var(--preview-code-text);
 }
 
 .markdown-content p code,
 .markdown-content li code {
-  background-color: var(--inline-code-bg);
+  background-color: var(--preview-inline-code-bg);
   border-radius: 3px;
   padding: 0.2em 0.4em;
   margin: 0 0.2em;
 }
 
-/* 引用块样式 */
+/* 引用样式 */
 .markdown-content blockquote {
-  background-color: var(--blockquote-bg);
-  border-left: 4px solid var(--blockquote-border);
-  color: var(--blockquote-text);
+  background-color: var(--preview-blockquote-bg);
+  border-left: 4px solid var(--preview-blockquote-border);
+  color: var(--preview-blockquote-text);
   padding: 0.5em 1em;
   margin: 1em 0;
 }
@@ -150,25 +210,66 @@ body[data-theme="github"] .markdown-content {
   border-collapse: collapse;
   width: 100%;
   margin: 1em 0;
+  border: 1px solid var(--preview-table-border);
+  border-radius: 3px;
 }
 
 .markdown-content th,
 .markdown-content td {
   padding: 0.5em 1em;
-  border: 1px solid var(--table-border);
+  border: 1px solid var(--preview-table-border);
 }
 
 .markdown-content th {
-  background-color: var(--table-header-bg);
-  font-weight: 600;
+  background-color: var(--preview-table-header-bg);
+  font-weight: 500;
+  color: var(--preview-text);
 }
 
 .markdown-content tbody tr:nth-child(odd) {
-  background-color: var(--table-odd-row-bg);
+  background-color: var(--preview-table-odd-row-bg);
 }
 
 .markdown-content tbody tr:nth-child(even) {
-  background-color: var(--table-even-row-bg);
+  background-color: var(--preview-table-even-row-bg);
+}
+
+/* 列表样式 */
+.markdown-content ul,
+.markdown-content ol {
+  padding-left: 2em;
+  margin: 1em 0;
+  color: var(--preview-text);
+}
+
+.markdown-content ul { list-style-type: disc; }
+.markdown-content ol { list-style-type: decimal; }
+
+.markdown-content li + li {
+  margin-top: 0.25em;
+}
+
+.markdown-content li > ul,
+.markdown-content li > ol {
+  margin: 0.25em 0 0.5em;
+}
+
+/* 图片样式 */
+.markdown-content img {
+  max-width: 100%;
+  box-sizing: content-box;
+  background-color: var(--preview-bg);
+  border-radius: 3px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* 分割线样式 */
+.markdown-content hr {
+  height: 1px;
+  padding: 0;
+  margin: 1.5em 0;
+  background-color: var(--preview-border);
+  border: 0;
 }
 
 /* 警告框样式 */
@@ -204,47 +305,7 @@ body[data-theme="github"] .markdown-content {
   border-left-color: var(--caution-border);
 }
 
-/* 列表样式 */
-.markdown-content ul,
-.markdown-content ol {
-  padding-left: 2em;
-  margin: 1em 0;
-}
-
-.markdown-content ul {
-  list-style-type: disc;
-}
-
-.markdown-content ol {
-  list-style-type: decimal;
-}
-
-.markdown-content li + li {
-  margin-top: 0.25em;
-}
-
-.markdown-content li > ul,
-.markdown-content li > ol {
-  margin: 0.25em 0 0.5em;
-}
-
-/* 图片样式 */
-.markdown-content img {
-  max-width: 100%;
-  box-sizing: content-box;
-  background-color: #fff;
-}
-
-/* 分割线样式 */
-.markdown-content hr {
-  height: 0.25em;
-  padding: 0;
-  margin: 24px 0;
-  background-color: var(--heading-border-color);
-  border: 0;
-}
-
-/* Mermaid 图表样式调整 */
+/* Mermaid 图表样式 */
 .markdown-content .mermaid-wrapper {
   text-align: center;
   margin: 1em auto;
@@ -255,119 +316,17 @@ body[data-theme="github"] .markdown-content {
   height: auto;
 }
 
-/* Notion特有样式 */
-body[data-theme="notion"] .markdown-content pre,
-body[data-theme="notion"] .markdown-content blockquote,
-body[data-theme="notion"] .markdown-content .markdown-alert {
-  border-radius: 3px;
-}
-
-/* GitHub特有样式 */
-body[data-theme="github"] .markdown-content img {
-  background-color: #fff;
-}
-
-/* Notion特有标题样式 */
-body[data-theme="notion"] .markdown-content h1 {
-  color: #37352f;
-  border-bottom-color: #e3e2e0;
-  font-weight: 600;
-  margin-top: 2em;
-  margin-bottom: 0.6em;
-}
-
-body[data-theme="notion"] .markdown-content h2 {
-  color: #37352f;
-  border-bottom-color: #e3e2e0;
-  font-weight: 600;
-  margin-top: 1.8em;
-  margin-bottom: 0.5em;
-}
-
-body[data-theme="notion"] .markdown-content h3 {
-  color: #37352f;
-  font-weight: 600;
-  margin-top: 1.6em;
-  margin-bottom: 0.4em;
-}
-
-/* Notion特有代码样式 */
-body[data-theme="notion"] .markdown-content pre {
-  background-color: #f7f6f3;
-  border: 1px solid #e3e2e0;
-  border-radius: 3px;
-  font-family: 'SFMono-Regular', Menlo, Consolas, 'PT Mono', 'Liberation Mono', Courier, monospace;
-}
-
-body[data-theme="notion"] .markdown-content p code,
-body[data-theme="notion"] .markdown-content li code {
-  background-color: rgba(135, 131, 120, 0.15);
-  color: #eb5757;
-  border-radius: 3px;
-  font-size: 85%;
-}
-
-/* Notion特有引用块样式 */
-body[data-theme="notion"] .markdown-content blockquote {
-  background-color: #f7f6f3;
-  border-left: 3px solid #e3e2e0;
-  color: #6b6a67;
-  padding: 0.5em 1em;
-  margin: 1em 0;
-}
-
-/* Notion特有列表样式 */
-body[data-theme="notion"] .markdown-content ul,
-body[data-theme="notion"] .markdown-content ol {
-  padding-left: 1.5em;
-  margin: 0.5em 0;
-  color: #2e2d29;
-}
-
-body[data-theme="notion"] .markdown-content li {
-  color: #2e2d29;
-  margin-bottom: 0.3em;
-}
-
-body[data-theme="notion"] .markdown-content li strong,
-body[data-theme="notion"] .markdown-content li em {
-  color: #1a1a1a;
-}
-
-/* Notion特有表格样式 */
-body[data-theme="notion"] .markdown-content table {
-  border: 1px solid #e3e2e0;
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-body[data-theme="notion"] .markdown-content th {
-  background-color: #f7f6f3;
-  font-weight: 600;
-  text-align: left;
-  color: #37352f;
-}
-
-body[data-theme="notion"] .markdown-content td,
-body[data-theme="notion"] .markdown-content th {
-  border: 1px solid #e3e2e0;
-  padding: 0.5em 0.8em;
-}
-
-/* GitHub特有列表样式 */
-body[data-theme="github"] .markdown-content ul,
-body[data-theme="github"] .markdown-content ol {
-  padding-left: 2em;
-  margin: 0.5em 0;
-  color: var(--text-color);
-}
-
-body[data-theme="github"] .markdown-content li {
-  color: var(--text-color);
-  margin-bottom: 0.3em;
-}
-
-body[data-theme="github"] .markdown-content li strong,
-body[data-theme="github"] .markdown-content li em {
-  color: #1a1a1a;
+/* 响应式调整 */
+@media (max-width: 768px) {
+  :root {
+    --font-size: 15px;
+  }
+  
+  textarea.editor-textarea {
+    padding: 12px;
+  }
+  
+  .markdown-content {
+    padding: 12px 16px;
+  }
 } 
