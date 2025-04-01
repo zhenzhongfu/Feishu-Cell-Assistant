@@ -126,9 +126,9 @@ const App: React.FC = () => {
             const value = await getCellValue(selection.recordId, selection.fieldId);
             // 处理单元格内容，确保是字符串类型
             const textContent = Array.isArray(value) 
-              ? value.map(item => item.text || '').filter(text => text).join('')
+              ? value.map(item => String(typeof item === 'object' && item !== null ? JSON.stringify(item) : item || '')).filter(Boolean).join('')
               : typeof value === 'object' && value !== null
-                ? value.text || ''
+                ? String(JSON.stringify(value))
                 : String(value || '');
             setContent(textContent);
           } catch (err) {
@@ -137,7 +137,7 @@ const App: React.FC = () => {
         }
         
         // 监听选择变化
-        bitable.base.onSelectionChange(async (event: any) => {
+        bitable.base.onSelectionChange(async (_: any) => {
           // 获取最新的选择
           const newSelection = await bitable.base.getSelection();
           
@@ -150,9 +150,9 @@ const App: React.FC = () => {
               const value = await getCellValue(newSelection.recordId, newSelection.fieldId);
               // 处理单元格内容，确保是字符串类型
               const textContent = Array.isArray(value) 
-                ? value.map(item => item.text || '').filter(text => text).join('')
+                ? value.map(item => String(typeof item === 'object' && item !== null ? JSON.stringify(item) : item || '')).filter(Boolean).join('')
                 : typeof value === 'object' && value !== null
-                  ? value.text || ''
+                  ? String(JSON.stringify(value))
                   : String(value || '');
               setContent(textContent);
             } catch (err) {

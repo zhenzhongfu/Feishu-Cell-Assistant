@@ -166,12 +166,12 @@ export const normalizeCodeBlocks = (markdown: string): string => {
     
     // 处理缩进代码块，转换为围栏代码块
     result = result.replace(/(?:^|\n)((?:\s{4}|\t)[^\n]+(?:\n(?:\s{4}|\t)[^\n]+)*)/g, (_, code) => {
-      const lines = code.split('\n').map(line => line.replace(/^(?:\s{4}|\t)/, ''));
+      const lines = code.split('\n').map((line: string) => line.replace(/^(?:\s{4}|\t)/, ''));
       return `\n\`\`\`\n${lines.join('\n')}\n\`\`\`\n`;
     });
     
     // 规范化围栏代码块
-    result = result.replace(/(?:^|\n)(`{3,}|~{3,})([\s\S]*?)(?:\n\1|$)/g, (match, fence, content) => {
+    result = result.replace(/(?:^|\n)(`{3,}|~{3,})([\s\S]*?)(?:\n\1|$)/g, (_match, _fence, content) => {
       // 提取语言标记（如果有）
       const firstLine = content.split('\n')[0];
       const lang = firstLine.trim();

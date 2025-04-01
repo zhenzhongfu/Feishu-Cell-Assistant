@@ -9,7 +9,7 @@ import 'katex/dist/katex.min.css';
 import { getCellValue } from '../utils/bitable';
 import Modal from './Modal';
 import html2pdf from 'html2pdf.js';
-import { ThemeStyle, generateThemeStyles } from '../utils/markdownThemes';
+import { ThemeStyle } from '../utils/markdownThemes';
 
 // 配置 marked 解析器
 const configureMarked = () => {

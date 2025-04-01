@@ -1,8 +1,8 @@
 /**
  * Markdown 预处理器
  */
-import { decodeHTML } from '../helpers/htmlHelpers';
-import { normalizeOrderedLists } from './listFormatters';
+// import { decodeHTML } from '../helpers/htmlHelpers';
+// import { normalizeOrderedLists } from './listFormatters';
 
 /**
  * 预处理 Markdown 内容，确保各种格式特性能被正确解析
