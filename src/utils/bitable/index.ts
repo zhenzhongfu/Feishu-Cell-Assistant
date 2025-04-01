@@ -57,60 +57,30 @@ const valueCache = new Map<string, string>();
  * @param fieldId 字段ID
  * @returns 单元格数据
  */
-export async function getCellValue(recordId: string, fieldId: string): Promise<any> {
+export const getCellValue = async (recordId: string, fieldId: string) => {
   try {
-    console.log(`尝试获取单元格数据: recordId=${recordId}, fieldId=${fieldId}`);
-    
-    // 获取当前选中的表格视图
     const selection = await bitable.base.getSelection();
-    console.log('当前选择信息:', selection);
-    
     if (!selection) {
-      console.error('未获取到表格选择信息');
       throw new Error('未获取到表格选择信息');
     }
-    
-    // 获取当前表格ID
+
     const tableId = selection.tableId;
     if (!tableId) {
-      console.error('选择信息中不包含表格ID');
       throw new Error('选择信息中不包含表格ID');
     }
-    
-    // 获取当前表格
+
     const table = await bitable.base.getTableById(tableId);
-    
     if (!table) {
-      console.error(`未找到表格: tableId=${tableId}`);
       throw new Error(`未找到表格: tableId=${tableId}`);
     }
-    
-    // 获取单元格值
-    const cellValue = await table.getCellValue(fieldId, recordId);
-    console.log('获取到原始单元格值:', cellValue);
 
-    // 处理单元格值
-    let processedValue = '';
-    if (Array.isArray(cellValue)) {
-      processedValue = cellValue.map(item => {
-        if (typeof item === 'object' && item !== null && 'text' in item) {
-          return item.text || '';
-        }
-        return String(item || '');
-      }).join('');
-    } else if (typeof cellValue === 'object' && cellValue !== null && 'text' in cellValue) {
-      processedValue = cellValue.text || '';
-    } else {
-      processedValue = String(cellValue || '');
-    }
-    
-    console.log('处理后的单元格值:', processedValue);
+    const cellValue = await table.getCellValue(fieldId, recordId);
+    const processedValue = cellValue || '';
     return processedValue;
   } catch (error) {
-    console.error('获取单元格数据失败:', error);
     throw error;
   }
-}
+};
 
 // 清除缓存
 export const clearCellValueCache = (recordId?: string, fieldId?: string) => {
@@ -129,65 +99,28 @@ export const clearCellValueCache = (recordId?: string, fieldId?: string) => {
  * @param fieldId 字段ID
  * @param value 要保存的数据
  */
-export async function setCellValue(recordId: string, fieldId: string, value: any): Promise<void> {
+export const setCellValue = async (recordId: string, fieldId: string, value: any) => {
   try {
-    console.log(`[setCellValue] 开始保存单元格数据: recordId=${recordId}, fieldId=${fieldId}, value=`, value);
-    
-    // 参数验证
-    if (!recordId || !fieldId) {
-      const error = new Error('保存失败: recordId和fieldId不能为空');
-      console.error(error);
-      throw error;
-    }
-    
-    // 获取当前选中的表格视图
     const selection = await bitable.base.getSelection();
-    
     if (!selection) {
-      throw new Error('未获取到表格选择信息，请确保插件在多维表格中运行');
+      throw new Error('未获取到表格选择信息');
     }
-    
-    // 获取当前表格ID
+
     const tableId = selection.tableId;
     if (!tableId) {
-      throw new Error('选择信息中不包含表格ID，请重新选择表格');
+      throw new Error('选择信息中不包含表格ID');
     }
-    
-    // 获取当前表格
+
     const table = await bitable.base.getTableById(tableId);
-    
     if (!table) {
       throw new Error(`未找到表格: tableId=${tableId}`);
     }
-    
-    // 设置单元格值，增加重试逻辑
-    let success = false;
-    let retryCount = 0;
-    const maxRetries = 3;
-    let lastError = null;
-    
-    while (!success && retryCount < maxRetries) {
-      try {
-        await table.setCellValue(fieldId, recordId, value);
-        success = true;
-      } catch (err) {
-        lastError = err;
-        retryCount++;
-        
-        if (retryCount < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, 300));
-        }
-      }
-    }
-    
-    if (!success) {
-      throw lastError || new Error('保存失败，请检查网络连接和权限设置');
-    }
+
+    await table.setCellValue(fieldId, recordId, value);
   } catch (error) {
-    console.error('[setCellValue] 保存单元格数据失败:', error);
     throw error;
   }
-}
+};
 
 // 添加bitable类型扩展
 declare global {
@@ -204,64 +137,35 @@ declare global {
  * 检测是否在飞书多维表格环境中运行
  * @returns 是否在多维表格环境中
  */
-export function isInBitableEnvironment(): boolean {
+export const isInBitableEnvironment = async () => {
   try {
-    console.log('[环境检测] 开始检测多维表格环境...');
-    
-    // 检查全局对象中是否有bitable对象
-    const hasBitableGlobal = typeof window !== 'undefined' && 'bitable' in window;
-    console.log('[环境检测] 全局bitable对象:', hasBitableGlobal);
-    
-    // 检查URL是否包含飞书多维表格相关的路径
+    const hasBitableGlobal = typeof bitable !== 'undefined';
     const url = window.location.href;
     const isFeishuUrl = url.includes('feishu.cn') || url.includes('larksuite.com');
-    const isBitableUrl = url.includes('bitable') || url.includes('base');
-    console.log('[环境检测] URL检查:', { url, isFeishuUrl, isBitableUrl });
+    const isBitableUrl = url.includes('base.feishu.cn') || url.includes('base.larksuite.com');
     
-    // 检查父窗口是否是飞书环境
     let isInFeishuIframe = false;
     try {
-      if (window.parent && window.parent !== window) {
-        const parentUrl = window.parent.location.href;
-        isInFeishuIframe = parentUrl.includes('feishu.cn') || 
-                          parentUrl.includes('larksuite.com') ||
-                          parentUrl.includes('bitable') ||
-                          parentUrl.includes('base');
-      }
-    } catch (frameError) {
-      // 如果无法访问父窗口（跨域限制），也认为可能在飞书环境中
-      console.log('[环境检测] 无法访问父窗口，可能处于跨域iframe中');
+      isInFeishuIframe = window.self !== window.top;
+    } catch (e) {
       isInFeishuIframe = true;
     }
     
-    // 检查 Lark SDK 是否可用
-    let larkSDKAvailable = false;
-    try {
-      larkSDKAvailable = typeof bitable !== 'undefined' && 
-                        typeof bitable.base !== 'undefined' &&
-                        typeof bitable.base.getSelection === 'function';
-      console.log('[环境检测] Lark SDK 可用性:', larkSDKAvailable);
-    } catch (sdkError) {
-      console.warn('[环境检测] 检查 Lark SDK 时出错:', sdkError);
-    }
+    const larkSDKAvailable = hasBitableGlobal && typeof bitable.base !== 'undefined';
     
-    // 综合判断：只要满足任一条件即可
-    const result = hasBitableGlobal || isFeishuUrl || isBitableUrl || isInFeishuIframe || larkSDKAvailable;
-    console.log('[环境检测] 最终结果:', result, {
+    const result = {
       hasBitableGlobal,
       isFeishuUrl,
       isBitableUrl,
       isInFeishuIframe,
       larkSDKAvailable
-    });
+    };
     
-    return result;
+    return result.larkSDKAvailable;
   } catch (error) {
-    console.error('[环境检测] 检测多维表格环境时发生错误:', error);
-    // 发生错误时，如果能检测到基本的bitable对象，仍然返回true
-    return typeof window !== 'undefined' && 'bitable' in window;
+    return false;
   }
-}
+};
 
 /**
  * 检测是否可以使用多维表格扩展API

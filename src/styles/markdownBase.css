@@ -71,31 +71,34 @@ body[data-theme="notion"] {
 body[data-theme="github"] {
   /* 编辑区样式 */
   --editor-bg: #ffffff;
-  --editor-text: #1a1f24;
-  --editor-border: #bdc4cc;
-  --editor-font-size: 15px;
+  --editor-text: #1f2328;
+  --editor-border: #d0d7de;
+  --editor-font-size: 16px;
 
   /* 预览区样式 */
   --preview-bg: #ffffff;
-  --preview-text: #1a1f24;
-  --preview-heading: #0f1417;
-  --preview-link: #0366d6;
-  --preview-link-hover: #0246a2;
-  --preview-code-bg: #f0f4f8;
-  --preview-code-text: #d73a49;
-  --preview-code-border: #bdc4cc;
-  --preview-inline-code-bg: #f0f4f8;
-  --preview-blockquote-bg: #f0f4f8;
-  --preview-blockquote-border: #bdc4cc;
-  --preview-blockquote-text: #3a434e;
-  --preview-table-border: #bdc4cc;
-  --preview-table-header-bg: #e7ecf2;
+  --preview-text: #1f2328;
+  --preview-heading: #1f2328;
+  --preview-link: #0969da;
+  --preview-link-hover: #1a4780;
+  --preview-code-bg: #f6f8fa;
+  --preview-code-text: #1f2328;
+  --preview-code-border: #d0d7de;
+  --preview-inline-code-bg: rgba(175, 184, 193, 0.2);
+  --preview-blockquote-bg: transparent;
+  --preview-blockquote-border: #d0d7de;
+  --preview-blockquote-text: #57606a;
+  --preview-table-border: #d0d7de;
+  --preview-table-header-bg: #f6f8fa;
   --preview-table-odd-row-bg: #ffffff;
   --preview-table-even-row-bg: #f6f8fa;
-  --preview-border: #bdc4cc;
+  --preview-border: #d0d7de;
+  
+  /* GitHub特有的字体设置 */
+  --github-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
   
   /* 整体背景色 */
-  background-color: #f0f6fc;
+  background-color: #ffffff;
 }
 
 /* 编辑器基础样式 */
@@ -442,4 +445,149 @@ body[data-theme="github"] .editor-textarea {
   border-radius: 3px;
   font-size: 0.9em;
   color: var(--preview-code-text);
+}
+
+.markdown-content[data-theme="github"] {
+  font-family: var(--github-font);
+  font-size: 16px;
+  line-height: 1.5;
+  word-wrap: break-word;
+  color: var(--preview-text);
+}
+
+.markdown-content[data-theme="github"] h1,
+.markdown-content[data-theme="github"] h2,
+.markdown-content[data-theme="github"] h3,
+.markdown-content[data-theme="github"] h4,
+.markdown-content[data-theme="github"] h5,
+.markdown-content[data-theme="github"] h6 {
+  font-family: var(--github-font);
+  margin-top: 24px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.markdown-content[data-theme="github"] h1 {
+  padding-bottom: 0.3em;
+  font-size: 2em;
+  border-bottom: 1px solid var(--preview-border);
+}
+
+.markdown-content[data-theme="github"] h2 {
+  padding-bottom: 0.3em;
+  font-size: 1.5em;
+  border-bottom: 1px solid var(--preview-border);
+}
+
+.markdown-content[data-theme="github"] h3 { font-size: 1.25em; }
+.markdown-content[data-theme="github"] h4 { font-size: 1em; }
+.markdown-content[data-theme="github"] h5 { font-size: 0.875em; }
+.markdown-content[data-theme="github"] h6 { font-size: 0.85em; color: #57606a; }
+
+.markdown-content[data-theme="github"] p,
+.markdown-content[data-theme="github"] blockquote,
+.markdown-content[data-theme="github"] ul,
+.markdown-content[data-theme="github"] ol,
+.markdown-content[data-theme="github"] dl,
+.markdown-content[data-theme="github"] table,
+.markdown-content[data-theme="github"] pre,
+.markdown-content[data-theme="github"] details {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.markdown-content[data-theme="github"] blockquote {
+  padding: 0 1em;
+  color: var(--preview-blockquote-text);
+  border-left: 0.25em solid var(--preview-blockquote-border);
+}
+
+.markdown-content[data-theme="github"] blockquote > :first-child {
+  margin-top: 0;
+}
+
+.markdown-content[data-theme="github"] blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown-content[data-theme="github"] code {
+  padding: 0.2em 0.4em;
+  margin: 0;
+  font-size: 85%;
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+  background-color: var(--preview-inline-code-bg);
+  border-radius: 6px;
+}
+
+.markdown-content[data-theme="github"] pre {
+  padding: 16px;
+  overflow: auto;
+  font-size: 85%;
+  line-height: 1.45;
+  background-color: var(--preview-code-bg);
+  border-radius: 6px;
+}
+
+.markdown-content[data-theme="github"] pre code {
+  padding: 0;
+  margin: 0;
+  font-size: 100%;
+  word-break: normal;
+  white-space: pre;
+  background: transparent;
+  border: 0;
+}
+
+.markdown-content[data-theme="github"] table {
+  display: block;
+  width: 100%;
+  width: max-content;
+  max-width: 100%;
+  overflow: auto;
+}
+
+.markdown-content[data-theme="github"] table th {
+  font-weight: 600;
+  background-color: var(--preview-table-header-bg);
+}
+
+.markdown-content[data-theme="github"] table tr {
+  background-color: var(--preview-bg);
+  border-top: 1px solid var(--preview-table-border);
+}
+
+.markdown-content[data-theme="github"] table tr:nth-child(2n) {
+  background-color: var(--preview-table-even-row-bg);
+}
+
+.markdown-content[data-theme="github"] table td,
+.markdown-content[data-theme="github"] table th {
+  padding: 6px 13px;
+  border: 1px solid var(--preview-table-border);
+}
+
+.markdown-content[data-theme="github"] img {
+  max-width: 100%;
+  box-sizing: content-box;
+  background-color: var(--preview-bg);
+}
+
+.markdown-content[data-theme="github"] a {
+  color: var(--preview-link);
+  text-decoration: none;
+}
+
+.markdown-content[data-theme="github"] a:hover {
+  text-decoration: underline;
+}
+
+/* 任务列表样式 */
+.markdown-content[data-theme="github"] .task-list-item {
+  list-style-type: none;
+}
+
+.markdown-content[data-theme="github"] .task-list-item input {
+  margin: 0 0.2em 0.25em -1.6em;
+  vertical-align: middle;
 } 

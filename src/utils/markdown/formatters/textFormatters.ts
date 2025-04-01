@@ -9,7 +9,6 @@
  */
 export const processNestedQuotes = (markdown: string): string => {
   if (typeof markdown !== 'string') {
-    console.warn('processNestedQuotes: 输入不是字符串类型');
     return String(markdown || '');
   }
 
@@ -44,7 +43,6 @@ export const processNestedQuotes = (markdown: string): string => {
       return processedLines.join('\n');
     });
   } catch (error) {
-    console.error('处理嵌套引用时出错:', error);
     return markdown;
   }
 };
@@ -56,7 +54,6 @@ export const processNestedQuotes = (markdown: string): string => {
  */
 export const normalizeLinks = (markdown: string): string => {
   if (typeof markdown !== 'string') {
-    console.warn('normalizeLinks: 输入不是字符串类型');
     return String(markdown || '');
   }
 
@@ -85,7 +82,6 @@ export const normalizeLinks = (markdown: string): string => {
     
     return result;
   } catch (error) {
-    console.error('处理链接格式时出错:', error);
     return markdown;
   }
 };
@@ -99,7 +95,6 @@ export const normalizeLinks = (markdown: string): string => {
  */
 export const fixHeadingHierarchy = (markdown: string): string => {
   if (typeof markdown !== 'string') {
-    console.warn('fixHeadingHierarchy: 输入不是字符串类型');
     return String(markdown || '');
   }
 
@@ -150,7 +145,6 @@ export const fixHeadingHierarchy = (markdown: string): string => {
     
     return result;
   } catch (error) {
-    console.error('修复标题层级时出错:', error);
     return markdown;
   }
 };
@@ -162,7 +156,6 @@ export const fixHeadingHierarchy = (markdown: string): string => {
  */
 export const normalizeHorizontalRules = (markdown: string): string => {
   if (typeof markdown !== 'string') {
-    console.warn('normalizeHorizontalRules: 输入不是字符串类型');
     return String(markdown || '');
   }
 
@@ -179,7 +172,6 @@ export const normalizeHorizontalRules = (markdown: string): string => {
     
     return result;
   } catch (error) {
-    console.error('规范化水平分隔线时出错:', error);
     return markdown;
   }
 }; 

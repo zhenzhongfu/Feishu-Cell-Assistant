@@ -111,15 +111,11 @@ const App: React.FC = () => {
         setIsBitable(isInBitable);
         
         if (!isInBitable) {
-          console.log('不在多维表格环境中');
           return;
         }
-
-        console.log('正在设置选择监听器...');
         
         // 获取初始选择
         const selection = await bitable.base.getSelection();
-        console.log('初始选择:', selection);
         
         if (selection && selection.tableId && selection.recordId && selection.fieldId) {
           setRecordId(selection.recordId);
@@ -128,27 +124,22 @@ const App: React.FC = () => {
           // 获取初始单元格内容
           try {
             const value = await getCellValue(selection.recordId, selection.fieldId);
-            console.log('初始单元格内容:', value);
             // 处理单元格内容，确保是字符串类型
             const textContent = Array.isArray(value) 
               ? value.map(item => item.text || '').filter(text => text).join('')
               : typeof value === 'object' && value !== null
                 ? value.text || ''
                 : String(value || '');
-            console.log('处理后的内容:', textContent);
             setContent(textContent);
           } catch (err) {
-            console.error('获取初始单元格内容失败:', err);
+            // 静默处理错误
           }
         }
         
         // 监听选择变化
         bitable.base.onSelectionChange(async (event: any) => {
-          console.log('选择已改变:', event);
-          
           // 获取最新的选择
           const newSelection = await bitable.base.getSelection();
-          console.log('新的选择:', newSelection);
           
           if (newSelection && newSelection.tableId && newSelection.recordId && newSelection.fieldId) {
             setRecordId(newSelection.recordId);
@@ -157,22 +148,20 @@ const App: React.FC = () => {
             // 获取新单元格内容
             try {
               const value = await getCellValue(newSelection.recordId, newSelection.fieldId);
-              console.log('新单元格内容:', value);
               // 处理单元格内容，确保是字符串类型
               const textContent = Array.isArray(value) 
                 ? value.map(item => item.text || '').filter(text => text).join('')
                 : typeof value === 'object' && value !== null
                   ? value.text || ''
                   : String(value || '');
-              console.log('处理后的内容:', textContent);
               setContent(textContent);
             } catch (err) {
-              console.error('获取新单元格内容失败:', err);
+              // 静默处理错误
             }
           }
         });
       } catch (err) {
-        console.error('设置选择监听器失败:', err);
+        // 静默处理错误
       }
     };
     
@@ -258,14 +247,11 @@ const App: React.FC = () => {
 
       // 如果在飞书环境中，保存到单元格
       if (isBitable && recordId && fieldId) {
-        console.log('准备保存内容到飞书单元格:', newContent);
         await setCellValue(recordId, fieldId, newContent);
-        console.log('内容已保存到飞书单元格');
       }
 
       return Promise.resolve();
     } catch (error) {
-      console.error('保存失败:', error);
       throw error;
     }
   };
@@ -319,7 +305,7 @@ const App: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               <h1 className={`tracking-tight font-semibold bg-clip-text text-transparent bg-gradient-to-r ${themeStyle === 'github' ? 'from-blue-800 to-blue-600' : 'from-indigo-800 to-indigo-600'} text-lg`}>
-                Markdown编辑助手
+                单元格助手 | Markdown排版预览编辑
               </h1>
             </div>
           </div>
@@ -374,30 +360,33 @@ const App: React.FC = () => {
         )}
       </header>     
 
-      <main className="flex-1 overflow-hidden">
+      <main className="flex-1 overflow-hidden relative">
+        {isBitable && (!recordId || !fieldId) && (
+          <div className="absolute inset-0 z-[9999] flex items-center justify-center bg-black/20 backdrop-blur-sm">
+            <div className="bg-white/90 backdrop-blur-md p-6 rounded-lg shadow-xl max-w-md mx-4 border border-gray-200/50">
+              <div className="flex items-center gap-3 mb-3">
+                <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-lg font-medium text-gray-900">提示</span>
+              </div>
+              <p className="text-gray-600">请点击任意文本类型的字段以查看或编辑其Markdown内容</p>
+            </div>
+          </div>
+        )}
         {isBitable ? (
           <div className="bitable-editor-container h-full overflow-hidden">
-            {recordId && fieldId ? (
-              <SplitEditor 
-                initialValue={content}
-                onSave={handleSave}
-                recordId={recordId}
-                fieldId={fieldId}
-                style={themeStyle}
-                isAutoSaveEnabled={isAutoSave}
-                onThemeChange={handleThemeChange}
-                onAutoSaveChange={handleAutoSaveChange}
-              />
-            ) : (
-              <div className="bg-notice-bg rounded-lg p-6 m-5 text-notice-text text-[15px] leading-relaxed shadow-sm border border-indigo-200">
-                <p className="flex items-center text-notice-hint text-sm font-medium">
-                  <svg className="w-5 h-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  提示：点击任意文本类型的字段以查看或编辑其Markdown内容
-                </p>
-              </div>
-            )}
+            <SplitEditor 
+              initialValue={recordId && fieldId ? content : ""}
+              onSave={handleSave}
+              recordId={recordId}
+              fieldId={fieldId}
+              style={themeStyle}
+              isAutoSaveEnabled={isAutoSave}
+              onThemeChange={handleThemeChange}
+              onAutoSaveChange={handleAutoSaveChange}
+              readOnly={!recordId || !fieldId}
+            />
           </div>
         ) : (
           <>
@@ -416,7 +405,7 @@ const App: React.FC = () => {
       </main>
       <ScrollToTop />
       <footer className="flex-none bg-white/80 backdrop-blur-sm border-t border-gray-200/80 z-[1000] p-0 m-0 box-border">
-        <p className="m-0 py-2 text-xs text-gray-500 text-center font-normal">Markdown编辑助手 v1.0.1</p>
+        <p className="m-0 py-2 text-xs text-gray-500 text-center font-normal">单元格助手 | Markdown排版预览编辑 v0.1</p>
       </footer>
     </div>
   );

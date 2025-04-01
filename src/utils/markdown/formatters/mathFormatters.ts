@@ -9,7 +9,6 @@
  */
 export const normalizeTeXMath = (markdown: string): string => {
   if (typeof markdown !== 'string') {
-    console.warn('normalizeTeXMath: 输入不是字符串类型');
     return String(markdown || '');
   }
 
@@ -46,7 +45,6 @@ export const normalizeTeXMath = (markdown: string): string => {
     
     return result;
   } catch (error) {
-    console.error('处理数学公式时出错:', error);
     return markdown;
   }
 };
@@ -105,7 +103,6 @@ export const extractMathFormulas = (
     
     return formulas;
   } catch (error) {
-    console.error('提取数学公式时出错:', error);
     return formulas;
   }
 };
@@ -155,7 +152,71 @@ export const fixCommonMathErrors = (formula: string): string => {
     
     return fixed;
   } catch (error) {
-    console.error('修复数学公式错误时出错:', error);
     return formula;
+  }
+};
+
+/**
+ * 数学公式格式化工具函数
+ */
+
+/**
+ * 规范化行内数学公式格式
+ * @param markdown Markdown文本
+ * @returns 处理后的Markdown文本
+ */
+export const normalizeInlineMath = (markdown: string): string => {
+  if (typeof markdown !== 'string') {
+    return String(markdown || '');
+  }
+
+  try {
+    let result = markdown;
+    
+    // 修复单个$符号的情况
+    result = result.replace(/(?<!\$)\$(?!\$)([^$\n]+?)(?<!\$)\$(?!\$)/g, (_, math) => {
+      return `$${math.trim()}$`;
+    });
+    
+    // 修复不配对的$符号
+    result = result.replace(/(?<!\$)\$(?!\$)([^$\n]+?)(?!\$)/g, (_, math) => {
+      return `$${math.trim()}$`;
+    });
+    result = result.replace(/(?<!\$)([^$\n]+?)\$(?!\$)/g, (_, math) => {
+      return `$${math.trim()}$`;
+    });
+    
+    return result;
+  } catch (error) {
+    return markdown;
+  }
+};
+
+/**
+ * 规范化块级数学公式格式
+ * @param markdown Markdown文本
+ * @returns 处理后的Markdown文本
+ */
+export const normalizeBlockMath = (markdown: string): string => {
+  if (typeof markdown !== 'string') {
+    return String(markdown || '');
+  }
+
+  try {
+    let result = markdown;
+    
+    // 修复块级数学公式格式
+    result = result.replace(/(?<!\$)\$\$([\s\S]*?)\$\$(?!\$)/g, (_, math) => {
+      const trimmedMath = math.trim();
+      return `\n\$\$\n${trimmedMath}\n\$\$\n`;
+    });
+    
+    // 确保块级公式前后有空行
+    result = result.replace(/([^\n])\n\$\$/g, '$1\n\n$$');
+    result = result.replace(/\$\$\n([^\n])/g, '$$\n\n$1');
+    
+    return result;
+  } catch (error) {
+    return markdown;
   }
 }; 

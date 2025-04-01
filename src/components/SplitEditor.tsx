@@ -101,7 +101,6 @@ const configureMarked = () => {
           strict: false
         });
       } catch (error) {
-        console.error('KaTeX 渲染错误:', error);
         return `<div class="text-red-500">公式渲染错误: ${(error as Error).message}</div>`;
       }
     }
@@ -1126,7 +1125,6 @@ const processMermaidCharts = (container: HTMLElement) => {
         const viewBox = svg.getAttribute('viewBox');
         if (viewBox) {
           const [, , width] = viewBox.split(' ').map(Number);
-          // 移除未使用的变量 height
           const maxWidth = 600;
           const targetWidth = Math.min(width, maxWidth);
           
@@ -1135,7 +1133,10 @@ const processMermaidCharts = (container: HTMLElement) => {
         }
       }
     } catch (error) {
-      console.error('处理 Mermaid 图表失败:', error);
+      // 静默处理错误，继续处理下一个图表
+      if (div instanceof HTMLElement) {
+        div.innerHTML = '<div class="text-red-500">图表处理失败</div>';
+      }
     }
   }
 };
@@ -1390,7 +1391,8 @@ const handleExportPDF = async () => {
     // 导出PDF
     await html2pdf().set(opt).from(tempDiv).save();
   } catch (error) {
-    console.error('导出PDF时发生错误:', error);
+    // 显示用户友好的错误提示
+    alert('导出PDF失败，请稍后重试');
     throw error;
   }
 };
@@ -1634,7 +1636,6 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
       
       setRenderedContent(nodes);
     } catch (error) {
-      console.error('渲染 Markdown 内容时出错:', error);
       setRenderedContent([
         <div key="error" className="text-red-500">
           渲染内容时出错: {(error as Error).message}
@@ -1661,7 +1662,6 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
       setSavedContent(contentToSave);
       setSaveStatus('saved');
     } catch (err) {
-      console.error('保存失败:', err);
       setError(err instanceof Error ? err.message : '保存失败');
       setSaveStatus('changed');
       throw err;
@@ -1682,7 +1682,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
           await saveContent(content);
         }
       } catch (err) {
-        console.error('自动保存失败:', err);
+        setError(err instanceof Error ? err.message : '自动保存失败');
       }
     }, 2000);
 
@@ -1699,11 +1699,11 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
         isInitialMount.current = false;
         try {
           const value = await getCellValue(recordId, fieldId);
-          setContent(value || '');
-          setSavedContent(value || '');
-          lastSavedContent.current = value || '';
+          const stringValue = String(value || '');
+          setContent(stringValue);
+          setSavedContent(stringValue);
+          lastSavedContent.current = stringValue;
         } catch (err) {
-          console.error('初始加载单元格内容失败:', err);
           setError(err instanceof Error ? err.message : '获取内容失败');
         }
         return;
@@ -1719,11 +1719,11 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
 
         try {
           const value = await getCellValue(recordId, fieldId);
-          setContent(value || '');
-          setSavedContent(value || '');
-          lastSavedContent.current = value || '';
+          const stringValue = String(value || '');
+          setContent(stringValue);
+          setSavedContent(stringValue);
+          lastSavedContent.current = stringValue;
         } catch (err) {
-          console.error('获取新单元格内容失败:', err);
           setError(err instanceof Error ? err.message : '获取内容失败');
         }
       }
@@ -1831,31 +1831,22 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
           throw new Error('找不到预览内容容器');
         }
         
-        // 使用新的公众号内容处理函数
         setCopyStatus(prev => ({ ...prev, wechat: 'processing' }));
         
         try {
-          console.log('开始处理公众号内容...');
           const processedHtml = await processContentForWechat(previewContainer as HTMLElement);
           const plainText = (previewContainer as HTMLElement).innerText;
-          
-          console.log('内容处理完成，准备复制...');
           success = await copyToClipboardWithHtml(plainText, processedHtml);
-          console.log('复制结果:', success ? '成功' : '失败');
         } catch (err) {
-          console.error('处理公众号内容时出错:', err);
           throw new Error(`处理公众号内容失败: ${err instanceof Error ? err.message : String(err)}`);
         }
       } else if (type === 'html') {
-        // 复制HTML功能
         const previewContainer = document.querySelector('.flex-auto.min-h-full.px-4.py-3.space-y-4');
         if (!previewContainer) {
           throw new Error('找不到预览内容容器');
         }
         
-        // 准备复制原始HTML
         const rawHtml = (previewContainer as HTMLElement).innerHTML;
-        // 使用纯文本复制，因为这样在粘贴时会保留HTML标签而不解析
         success = await copyToClipboard(rawHtml);
       }
       
@@ -1866,14 +1857,12 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
         throw new Error('复制操作未成功完成');
       }
     } catch (err) {
-      console.error(`复制失败(${type}):`, err);
       setCopyStatus(prev => ({ ...prev, [type]: false }));
       
-      // 显示更友好的错误消息
       if (type === 'wechat') {
         alert(`复制到公众号失败: ${err instanceof Error ? err.message : '未知错误'}。可能是因为内容过于复杂，请尝试复制原文后手动处理。`);
       } else {
-      alert('复制失败，请使用快捷键(Ctrl+C)手动复制');
+        alert('复制失败，请使用快捷键(Ctrl+C)手动复制');
       }
     }
   };

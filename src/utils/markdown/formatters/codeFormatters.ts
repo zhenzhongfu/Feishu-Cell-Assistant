@@ -142,4 +142,82 @@ export const getLanguageDisplayName = (language: string): string => {
   
   // 返回映射的语言名称或原始语言标识符
   return languageMap[lowerLang] || language;
+};
+
+/**
+ * 代码块格式化工具函数
+ */
+
+/**
+ * 规范化代码块格式
+ * - 确保代码块前后有空行
+ * - 确保代码块使用三个反引号
+ * - 确保语言标记格式正确
+ * @param markdown Markdown文本
+ * @returns 处理后的Markdown文本
+ */
+export const normalizeCodeBlocks = (markdown: string): string => {
+  if (typeof markdown !== 'string') {
+    return String(markdown || '');
+  }
+
+  try {
+    let result = markdown;
+    
+    // 处理缩进代码块，转换为围栏代码块
+    result = result.replace(/(?:^|\n)((?:\s{4}|\t)[^\n]+(?:\n(?:\s{4}|\t)[^\n]+)*)/g, (_, code) => {
+      const lines = code.split('\n').map(line => line.replace(/^(?:\s{4}|\t)/, ''));
+      return `\n\`\`\`\n${lines.join('\n')}\n\`\`\`\n`;
+    });
+    
+    // 规范化围栏代码块
+    result = result.replace(/(?:^|\n)(`{3,}|~{3,})([\s\S]*?)(?:\n\1|$)/g, (match, fence, content) => {
+      // 提取语言标记（如果有）
+      const firstLine = content.split('\n')[0];
+      const lang = firstLine.trim();
+      const code = firstLine === lang ? content.substring(firstLine.length + 1) : content;
+      
+      // 构建规范化的代码块
+      return `\n\`\`\`${lang}\n${code.trim()}\n\`\`\`\n`;
+    });
+    
+    // 确保代码块前后有空行
+    result = result.replace(/([^\n])\n```/g, '$1\n\n```');
+    result = result.replace(/```\n([^\n])/g, '```\n\n$1');
+    
+    return result;
+  } catch (error) {
+    return markdown;
+  }
+};
+
+/**
+ * 规范化行内代码格式
+ * @param markdown Markdown文本
+ * @returns 处理后的Markdown文本
+ */
+export const normalizeInlineCode = (markdown: string): string => {
+  if (typeof markdown !== 'string') {
+    return String(markdown || '');
+  }
+
+  try {
+    let result = markdown;
+    
+    // 修复不配对的反引号
+    result = result.replace(/(?<!`)`(?!`)(.*?)(?<!`)`(?!`)/g, (match, code) => {
+      // 如果代码中包含反引号，使用双反引号
+      if (code.includes('`')) {
+        return `\`\`${code}\`\``;
+      }
+      return match;
+    });
+    
+    // 确保反引号内部首尾没有多余空格
+    result = result.replace(/`\s*(.*?)\s*`/g, (_, code) => `\`${code.trim()}\``);
+    
+    return result;
+  } catch (error) {
+    return markdown;
+  }
 }; 

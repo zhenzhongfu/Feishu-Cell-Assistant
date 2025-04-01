@@ -167,4 +167,98 @@ export const isPotentialTableRow = (line: string): boolean => {
   return trimmed.startsWith('|') && 
          trimmed.endsWith('|') && 
          trimmed.indexOf('|', 1) !== -1;
+};
+
+/**
+ * 表格格式化工具函数
+ */
+
+/**
+ * 规范化表格格式
+ * - 确保表格前后有空行
+ * - 规范化表格对齐标记
+ * - 规范化单元格内容格式
+ * @param markdown Markdown文本
+ * @returns 处理后的Markdown文本
+ */
+export const normalizeTables = (markdown: string): string => {
+  if (typeof markdown !== 'string') {
+    return String(markdown || '');
+  }
+
+  try {
+    let result = markdown;
+    
+    // 匹配完整的表格（包括表头和分隔行）
+    const tableRegex = /(?:^|\n)((?:\|[^|\n]*)+\|[ \t]*\n(?:\|[ :-]*)+\|[ \t]*\n(?:(?:\|[^|\n]*)+\|[ \t]*\n?)*)/g;
+    
+    result = result.replace(tableRegex, (table) => {
+      // 分割表格行
+      const rows = table.trim().split('\n');
+      
+      // 处理表头行
+      const headerRow = rows[0];
+      const headers = headerRow.split('|')
+        .filter(cell => cell.trim() !== '')
+        .map(cell => cell.trim());
+      
+      // 处理分隔行
+      const alignmentRow = rows[1];
+      const alignments = alignmentRow.split('|')
+        .filter(cell => cell.trim() !== '')
+        .map(cell => {
+          const trimmed = cell.trim();
+          if (trimmed.startsWith(':') && trimmed.endsWith(':')) return ':---:';
+          if (trimmed.startsWith(':')) return ':---';
+          if (trimmed.endsWith(':')) return '---:';
+          return '---';
+        });
+      
+      // 处理数据行
+      const dataRows = rows.slice(2).map(row => {
+        return row.split('|')
+          .filter(cell => cell.trim() !== '')
+          .map(cell => cell.trim());
+      });
+      
+      // 计算每列的最大宽度
+      const columnCount = Math.max(
+        headers.length,
+        ...dataRows.map(row => row.length)
+      );
+      
+      // 构建规范化的表格
+      const normalizedHeaders = headers
+        .concat(Array(columnCount - headers.length).fill(''))
+        .map(header => ` ${header} `);
+      
+      const normalizedAlignments = alignments
+        .concat(Array(columnCount - alignments.length).fill('---'))
+        .map(align => align);
+      
+      const normalizedDataRows = dataRows.map(row => {
+        return row
+          .concat(Array(columnCount - row.length).fill(''))
+          .map(cell => ` ${cell} `);
+      });
+      
+      // 组装表格
+      const normalizedTable = [
+        `|${normalizedHeaders.join('|')}|`,
+        `|${normalizedAlignments.join('|')}|`,
+        ...normalizedDataRows.map(row => `|${row.join('|')}|`)
+      ].join('\n');
+      
+      // 确保表格前后有空行
+      return `\n${normalizedTable}\n`;
+    });
+    
+    // 确保表格前后有空行
+    result = result.replace(/([^\n])\n\|/g, '$1\n\n|');
+    result = result.replace(/\|\n([^\n])/g, '|\n\n$1');
+    
+    return result;
+  } catch (error) {
+    return markdown;
+  }
 }; 
