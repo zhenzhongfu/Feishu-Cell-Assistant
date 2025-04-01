@@ -16,7 +16,6 @@ yarn-error.log*
 .env.production
 
 # 忽略构建输出文件夹
-dist/
 build/
 out/
 
