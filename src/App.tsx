@@ -126,9 +126,18 @@ const App: React.FC = () => {
             const value = await getCellValue(selection.recordId, selection.fieldId);
             // 处理单元格内容，确保是字符串类型
             const textContent = Array.isArray(value) 
-              ? value.map(item => String(typeof item === 'object' && item !== null ? JSON.stringify(item) : item || '')).filter(Boolean).join('')
+              ? value.map(item => {
+                  if (typeof item === 'object' && item !== null) {
+                    // @ts-ignore
+                    return item.text || item.name || item.value || '';
+                  }
+                  return String(item || '');
+                }).filter(Boolean).join('')
               : typeof value === 'object' && value !== null
-                ? String(JSON.stringify(value))
+                ? (() => {
+                    // @ts-ignore
+                    return value.text || value.name || value.value || '';
+                  })()
                 : String(value || '');
             setContent(textContent);
           } catch (err) {
@@ -150,9 +159,18 @@ const App: React.FC = () => {
               const value = await getCellValue(newSelection.recordId, newSelection.fieldId);
               // 处理单元格内容，确保是字符串类型
               const textContent = Array.isArray(value) 
-                ? value.map(item => String(typeof item === 'object' && item !== null ? JSON.stringify(item) : item || '')).filter(Boolean).join('')
+                ? value.map(item => {
+                    if (typeof item === 'object' && item !== null) {
+                      // @ts-ignore
+                      return item.text || item.name || item.value || '';
+                    }
+                    return String(item || '');
+                  }).filter(Boolean).join('')
                 : typeof value === 'object' && value !== null
-                  ? String(JSON.stringify(value))
+                  ? (() => {
+                      // @ts-ignore
+                      return value.text || value.name || value.value || '';
+                    })()
                   : String(value || '');
               setContent(textContent);
             } catch (err) {
