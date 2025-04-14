@@ -14,18 +14,9 @@ async function handleRequest(request) {
   // 获取请求的 URL
   const url = new URL(request.url)
   
-  // 如果请求的是根路径，返回 index.html
-  if (url.pathname === '/') {
-    const html = await fetch('index.html', { 
-      cf: { cacheTtl: 3600 } 
-    })
-    return html
-  }
+  // 将 Workers 域名重定向到 Pages 域名
+  // 修改为您的实际 Pages 域名
+  const pagesUrl = "https://feishu-markdown-helper.pages.dev" + url.pathname + url.search
   
-  // 处理其他静态资源
-  try {
-    return await fetch(request)
-  } catch (e) {
-    return new Response('资源未找到', { status: 404 })
-  }
+  return Response.redirect(pagesUrl, 301)
 } 

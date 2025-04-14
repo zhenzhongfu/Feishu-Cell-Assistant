@@ -8,12 +8,20 @@ const writeRedirects = () => {
   try {
     fs.writeFileSync('public/_redirects', '/* /index.html 200');
     console.log('Created _redirects file for Cloudflare Pages');
+
+    // 创建 _routes.json 文件
+    fs.writeFileSync('public/_routes.json', JSON.stringify({
+      version: 1,
+      include: ["/*"],
+      exclude: ["/assets/*"]
+    }, null, 2));
+    console.log('Created _routes.json file for Cloudflare Pages');
   } catch (error) {
-    console.error('Failed to create _redirects file:', error);
+    console.error('Failed to create routing files:', error);
   }
 };
 
-// 在构建前创建_redirects文件
+// 在构建前创建路由文件
 writeRedirects();
 
 export default defineConfig({
