@@ -1,6 +1,20 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import fs from 'fs';
+
+// 确保_redirects文件存在
+const writeRedirects = () => {
+  try {
+    fs.writeFileSync('public/_redirects', '/* /index.html 200');
+    console.log('Created _redirects file for Cloudflare Pages');
+  } catch (error) {
+    console.error('Failed to create _redirects file:', error);
+  }
+};
+
+// 在构建前创建_redirects文件
+writeRedirects();
 
 export default defineConfig({
   plugins: [
