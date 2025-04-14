@@ -41,3 +41,34 @@ yarn.lock
 
 # 忽略缓存文件夹
 .cache
+
+# 编译输出
+/dist
+/build
+/node_modules
+
+# 开发环境
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 日志
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 编辑器
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Cloudflare Workers 相关
+.wrangler/
+/worker-site
+.dev.vars

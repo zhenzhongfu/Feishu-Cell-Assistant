@@ -1,0 +1,17 @@
+name = "feishu-markdown-helper"
+main = "./dist/worker.js"
+compatibility_date = "2023-10-30"
+
+account_id = "zhenzhong.fu@gmail.com" # 请填入你的 Cloudflare 账户 ID（必须是数字ID）
+workers_dev = true
+
+[site]
+bucket = "./dist"
+
+[build]
+command = "npm run build"
+
+[env.production]
+workers_dev = false
+route = { pattern = "", custom_domain = true }
+zone_id = "md.pigu.app" # 请填入你的 zone ID（必须是数字ID） 

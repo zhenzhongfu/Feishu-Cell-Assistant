@@ -34,10 +34,17 @@ export default defineConfig({
       }
     },
     rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        worker: path.resolve(__dirname, 'src/worker.js')
+      },
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom'],
           'markdown-vendor': ['marked', 'dompurify']
+        },
+        entryFileNames: (chunkInfo) => {
+          return chunkInfo.name === 'worker' ? 'worker.js' : 'assets/[name]-[hash].js';
         }
       }
     }
