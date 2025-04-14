@@ -77,6 +77,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
   highlightLines = [],
 }) => {
   const [copySuccess, setCopySuccess] = useState(false);
+  const [copyError, setCopyError] = useState(false);
   
   // 规范化代码内容
   const codeValue = normalizeCodeContent(value || '');
@@ -88,7 +89,11 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
   const lineHighlights = codeInfo.highlightLines || highlightLines;
   
   // 处理代码复制
-  const handleCopy = async () => {
+  const handleCopy = async (event: React.MouseEvent) => {
+    // 阻止事件冒泡，防止与飞书插件冲突
+    event.stopPropagation();
+    event.preventDefault();
+    
     try {
       // 移除多余的空行和末尾空格
       const cleanCode = codeValue.trim();
@@ -110,50 +115,82 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
       }
 
       console.log('使用传统 execCommand 方式复制');
-      // 回退方案：使用传统的 execCommand
-      const textArea = document.createElement('textarea');
-      textArea.value = cleanCode;
-      
-      // 确保 textarea 不可见但可以选中
-      textArea.style.position = 'fixed';  // 改为 fixed 定位
-      textArea.style.left = '0';
-      textArea.style.top = '0';
-      textArea.style.width = '2em';
-      textArea.style.height = '2em';
-      textArea.style.padding = '0';
-      textArea.style.border = 'none';
-      textArea.style.outline = 'none';
-      textArea.style.boxShadow = 'none';
-      textArea.style.background = 'transparent';
-      textArea.style.opacity = '0';
-      
-      document.body.appendChild(textArea);
-      console.log('临时文本区域已创建');
-      
+      // 回退方案：使用传统的 execCommand，但通过更可靠的方式
       try {
+        // 创建临时元素但不立即添加到DOM
+        const textArea = document.createElement('textarea');
+        textArea.value = cleanCode;
+        
+        // 确保 textarea 不可见但可以选中
+        Object.assign(textArea.style, {
+          position: 'absolute',
+          left: '-9999px',
+          top: (window.pageYOffset || document.documentElement.scrollTop) + 'px',
+          width: '1px',
+          height: '1px',
+          padding: '0',
+          border: 'none',
+          outline: 'none',
+          boxShadow: 'none',
+          background: 'transparent',
+        });
+        
+        // 添加到DOM并进行复制操作
+        document.body.appendChild(textArea);
+        console.log('临时文本区域已创建');
+        
+        // 选择文本
         textArea.focus();
         textArea.select();
         console.log('文本已选中');
         
+        // 执行复制命令
         const successful = document.execCommand('copy');
+        
+        // 移除临时元素
+        document.body.removeChild(textArea);
+        console.log('临时文本区域已移除');
+        
         if (successful) {
           console.log('execCommand 复制成功');
           setCopySuccess(true);
           setTimeout(() => setCopySuccess(false), 2000);
         } else {
-          console.error('execCommand 返回失败');
+          console.warn('execCommand 返回失败');
           throw new Error('复制命令执行失败');
         }
       } catch (err) {
         console.error('execCommand 复制出错:', err);
-        alert('复制失败，请尝试使用键盘快捷键(Ctrl+C)复制');
-      } finally {
-        document.body.removeChild(textArea);
-        console.log('临时文本区域已移除');
+        // 尝试最后一种复制方式
+        try {
+          const text = cleanCode;
+          const input = document.createElement('input');
+          input.setAttribute('readonly', 'readonly');
+          input.setAttribute('value', text);
+          document.body.appendChild(input);
+          input.setSelectionRange(0, 9999);
+          input.select();
+          const successful = document.execCommand('copy');
+          document.body.removeChild(input);
+          
+          if (successful) {
+            setCopySuccess(true);
+            setTimeout(() => setCopySuccess(false), 2000);
+            return;
+          }
+        } catch (e) {
+          console.error('备用复制方法也失败:', e);
+        }
+        
+        // 显示浮动错误提示而不是alert
+        setCopyError(true);
+        setTimeout(() => setCopyError(false), 3000);
       }
     } catch (err) {
       console.error('整体复制过程失败:', err);
-      alert('复制失败，请尝试使用键盘快捷键(Ctrl+C)复制');
+      // 显示浮动错误提示而不是alert
+      setCopyError(true);
+      setTimeout(() => setCopyError(false), 3000);
     }
   };
   
@@ -176,13 +213,24 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
         <button
           className={`px-2 py-1 text-xs rounded bg-gray-700 hover:bg-gray-600 text-gray-200 transition-colors ${
             copySuccess ? 'bg-green-700 hover:bg-green-600' : ''
+          } ${
+            copyError ? 'bg-red-700 hover:bg-red-600' : ''
           }`}
           type="button"
           onClick={handleCopy}
           aria-label="复制代码"
+          onMouseDown={(e) => e.stopPropagation()}
+          onMouseUp={(e) => e.stopPropagation()}
         >
-          {copySuccess ? '已复制' : '复制'}
+          {copySuccess ? '已复制' : copyError ? '复制失败' : '复制'}
         </button>
+
+        {/* 复制失败提示 */}
+        {copyError && (
+          <div className="absolute top-10 right-0 px-3 py-2 text-xs rounded bg-red-700 text-white shadow-lg whitespace-nowrap">
+            复制失败，请尝试使用键盘快捷键(Ctrl+C)复制
+          </div>
+        )}
 
         {/* 语言标签 */}
         {displayLanguage && (
