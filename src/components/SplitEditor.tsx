@@ -235,22 +235,19 @@ configureMarked();
 
 interface SplitEditorProps {
   initialValue?: string;
-  content?: string; // 新增content属性
+  content?: string;
   onSave?: (content: string) => Promise<void>;
-  onContentChange?: (content: string) => Promise<void>; // 新增onContentChange属性
+  onContentChange?: (content: string) => Promise<void>;
   readOnly?: boolean;
   recordId?: string;
   fieldId?: string;
   isBitable?: boolean;
   style?: ThemeStyle;
-  themeStyle?: ThemeStyle; // 新增themeStyle属性，兼容原来的style
+  themeStyle?: ThemeStyle;
   isAutoSaveEnabled?: boolean;
-  isAutoSave?: boolean; // 新增isAutoSave属性，兼容原来的isAutoSaveEnabled
+  isAutoSave?: boolean;
   onThemeChange?: (theme: ThemeStyle) => void;
   onAutoSaveChange?: (autoSave: boolean) => void;
-  formatStatus?: null | 'success' | 'error'; // 新增formatStatus属性
-  isScrolled?: boolean; // 新增isScrolled属性
-  onFormat?: () => void; // 新增onFormat属性处理
 }
 
 // 用于从数学公式元素中提取TeX内容的辅助函数
@@ -1510,12 +1507,10 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
   isBitable = false,
   style = 'notion',
   themeStyle,
-  isAutoSaveEnabled = true, // 默认自动保存为true
-  isAutoSave = true, // 默认自动保存为true
+  isAutoSaveEnabled = true,
+  isAutoSave = true,
   onThemeChange,
-  onAutoSaveChange,
-  formatStatus,
-  onFormat
+  onAutoSaveChange
 }) => {
   // 处理兼容性问题，优先使用新属性
   const effectiveStyle = themeStyle || style;
@@ -2008,13 +2003,6 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
     
     return () => {};
   }, [viewMode]);
-
-  // 添加格式化按钮的处理函数
-  const handleFormatClick = () => {
-    if (onFormat) {
-      onFormat();
-    }
-  };
 
   return (
     <div className="flex flex-col h-full w-full overflow-hidden bg-white">
