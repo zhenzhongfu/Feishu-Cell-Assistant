@@ -1,9 +1,18 @@
 import React, { useEffect, useState } from 'react';
 
-const ScrollToTop: React.FC = () => {
+interface ScrollToTopProps {
+  isVisible?: boolean;
+}
+
+const ScrollToTop: React.FC<ScrollToTopProps> = ({ isVisible: propIsVisible }) => {
   const [isVisible, setIsVisible] = useState(false);
 
   const toggleVisibility = () => {
+    // 如果属性中提供了isVisible，则使用该值
+    if (propIsVisible !== undefined) {
+      return;
+    }
+    
     const textarea = document.querySelector('textarea');
     const editorScrollable = document.querySelector('.editor-scrollable-container');
     const previewScrollable = document.querySelector('.preview-scrollable-container');
@@ -76,6 +85,12 @@ const ScrollToTop: React.FC = () => {
   };
 
   useEffect(() => {
+    // 如果属性中提供了isVisible，则使用该值
+    if (propIsVisible !== undefined) {
+      setIsVisible(propIsVisible);
+      return;
+    }
+    
     const addScrollListeners = () => {
       const textarea = document.querySelector('textarea');
       if (textarea) {
@@ -134,7 +149,10 @@ const ScrollToTop: React.FC = () => {
       removeScrollListeners();
       clearInterval(intervalId);
     };
-  }, []);
+  }, [propIsVisible]);
+
+  // 使用传入的isVisible或内部状态
+  const displayIsVisible = propIsVisible !== undefined ? propIsVisible : isVisible;
 
   return (
     <button
@@ -145,7 +163,7 @@ const ScrollToTop: React.FC = () => {
         rounded-md shadow-lg
         transition-all duration-200 ease-in-out
         transform hover:scale-105 active:scale-95
-        ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0 pointer-events-none'}
+        ${displayIsVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0 pointer-events-none'}
         group
       `}
       title="回到顶部"

@@ -10,6 +10,7 @@ import { getCellValue } from '../utils/bitable';
 import Modal from './Modal';
 import html2pdf from 'html2pdf.js';
 import { ThemeStyle } from '../utils/markdownThemes';
+import debounce from 'lodash/debounce';
 
 // 配置 marked 解析器
 const configureMarked = () => {
@@ -233,16 +234,23 @@ const configureMarked = () => {
 configureMarked();
 
 interface SplitEditorProps {
-  initialValue: string;
+  initialValue?: string;
+  content?: string; // 新增content属性
   onSave?: (content: string) => Promise<void>;
+  onContentChange?: (content: string) => Promise<void>; // 新增onContentChange属性
   readOnly?: boolean;
   recordId?: string;
   fieldId?: string;
   isBitable?: boolean;
-  style?: ThemeStyle;  // 修改为使用ThemeStyle类型
-  isAutoSaveEnabled?: boolean;  // 添加自动保存属性
-  onThemeChange?: (theme: ThemeStyle) => void;  // 添加主题变更回调
-  onAutoSaveChange?: (autoSave: boolean) => void;  // 添加自动保存设置变更回调
+  style?: ThemeStyle;
+  themeStyle?: ThemeStyle; // 新增themeStyle属性，兼容原来的style
+  isAutoSaveEnabled?: boolean;
+  isAutoSave?: boolean; // 新增isAutoSave属性，兼容原来的isAutoSaveEnabled
+  onThemeChange?: (theme: ThemeStyle) => void;
+  onAutoSaveChange?: (autoSave: boolean) => void;
+  formatStatus?: null | 'success' | 'error'; // 新增formatStatus属性
+  isScrolled?: boolean; // 新增isScrolled属性
+  onFormat?: () => void; // 新增onFormat属性处理
 }
 
 // 用于从数学公式元素中提取TeX内容的辅助函数
@@ -1493,19 +1501,31 @@ const handleCodeAction = (text: string) => {
 
 const SplitEditor: React.FC<SplitEditorProps> = ({
   initialValue = '',
+  content,
   onSave,
+  onContentChange,
   readOnly = false,
   recordId,
   fieldId,
   isBitable = false,
-  style = 'notion',  // 默认为Notion样式
-  isAutoSaveEnabled = false,  // 添加自动保存属性
-  onThemeChange,  // 添加主题变更回调
-  onAutoSaveChange  // 添加自动保存设置变更回调
+  style = 'notion',
+  themeStyle,
+  isAutoSaveEnabled = true, // 默认自动保存为true
+  isAutoSave = true, // 默认自动保存为true
+  onThemeChange,
+  onAutoSaveChange,
+  formatStatus,
+  onFormat
 }) => {
-  // 状态定义
-  const [content, setContent] = useState(initialValue);
-  const [savedContent, setSavedContent] = useState(initialValue);
+  // 处理兼容性问题，优先使用新属性
+  const effectiveStyle = themeStyle || style;
+  const effectiveIsAutoSave = isAutoSave !== undefined ? isAutoSave : isAutoSaveEnabled;
+  
+  // 使用content属性或initialValue
+  const initialContentValue = content !== undefined ? content : initialValue;
+  
+  const [value, setValue] = useState(initialContentValue);
+  const [savedContent, setSavedContent] = useState(initialContentValue);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'changed'>('saved');
   const [renderedContent, setRenderedContent] = useState<React.ReactNode[]>([]);
   const [viewMode, setViewMode] = useState<'edit' | 'split' | 'preview'>('edit');
@@ -1513,7 +1533,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pendingContent, setPendingContent] = useState<string | null>(null);
-  const [currentStyle, setCurrentStyle] = useState<ThemeStyle>(style);  // 使用ThemeStyle类型
+  const [currentStyle, setCurrentStyle] = useState<ThemeStyle>(effectiveStyle);  // 使用ThemeStyle类型
   
   // 复制状态
   const [copyStatus, setCopyStatus] = useState<{
@@ -1550,7 +1570,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
 
   // 监听 initialValue 的变化
   useEffect(() => {
-    setContent(initialValue);
+    setValue(initialValue);
     setSavedContent(initialValue);
     setSaveStatus('saved');
   }, [initialValue]);
@@ -1570,7 +1590,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
 
       // 使用 marked 解析 markdown
       const renderer = configureMarked();
-      const html = marked.parse(content, {
+      const html = marked.parse(value, {
         renderer,
         async: false
       }) as string;
@@ -1644,7 +1664,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
         </div>
       ]);
     }
-  }, [content, currentStyle]);  // 只依赖content和currentStyle
+  }, [value, currentStyle]);  // 只依赖value和currentStyle
 
   // 保存内容的函数
   const saveContent = useCallback(async (contentToSave: string) => {
@@ -1674,14 +1694,14 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
 
   // 自动保存逻辑
   useEffect(() => {
-    if (!isAutoSaveEnabled || content === savedContent || isSaving.current) {
+    if (!effectiveIsAutoSave || value === savedContent || isSaving.current) {
       return;
     }
 
     const timer = setTimeout(async () => {
       try {
-        if (content !== savedContent) {
-          await saveContent(content);
+        if (value !== savedContent) {
+          await saveContent(value);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : '自动保存失败');
@@ -1689,7 +1709,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [isAutoSaveEnabled, content, savedContent, saveContent]);
+  }, [effectiveIsAutoSave, value, savedContent, saveContent]);
 
   // 处理单元格切换
   useEffect(() => {
@@ -1702,7 +1722,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
         try {
           const value = await getCellValue(recordId, fieldId);
           const stringValue = String(value || '');
-          setContent(stringValue);
+          setValue(stringValue);
           setSavedContent(stringValue);
           lastSavedContent.current = stringValue;
         } catch (err) {
@@ -1713,7 +1733,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
 
       // 处理单元格切换
       if (recordId !== previousRecordId.current || fieldId !== previousFieldId.current) {
-        if (content !== savedContent) {
+        if (value !== savedContent) {
           setPendingContent(null);
           setIsModalOpen(true);
           return;
@@ -1722,7 +1742,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
         try {
           const value = await getCellValue(recordId, fieldId);
           const stringValue = String(value || '');
-          setContent(stringValue);
+          setValue(stringValue);
           setSavedContent(stringValue);
           lastSavedContent.current = stringValue;
         } catch (err) {
@@ -1734,16 +1754,16 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
     handleCellChange();
     previousRecordId.current = recordId;
     previousFieldId.current = fieldId;
-  }, [recordId, fieldId, content, savedContent, isBitable]);
+  }, [recordId, fieldId, value, savedContent, isBitable]);
 
   // 处理模态框操作
   const handleModalConfirm = async () => {
     try {
-      await saveContent(content);
+      await saveContent(value);
       setIsModalOpen(false);
       
       if (pendingContent !== null) {
-        setContent(pendingContent);
+        setValue(pendingContent);
         setSavedContent(pendingContent);
         lastSavedContent.current = pendingContent;
         setPendingContent(null);
@@ -1756,7 +1776,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
   const handleModalClose = () => {
     setIsModalOpen(false);
     if (pendingContent !== null) {
-      setContent(pendingContent);
+      setValue(pendingContent);
       setSavedContent(pendingContent);
       lastSavedContent.current = pendingContent;
       setPendingContent(null);
@@ -1765,18 +1785,37 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
 
   // 内容变更处理
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const textarea = e.target;
-    const scrollTop = textarea.scrollTop;
-    const newContent = e.target.value;
+    const newValue = e.target.value;
+    setValue(newValue);
     
-    setContent(newContent);
-    setSaveStatus(newContent !== savedContent ? 'changed' : 'saved');
+    if (onContentChange) {
+      onContentChange(newValue);
+    }
     
-    // 恢复滚动位置
-    requestAnimationFrame(() => {
-      textarea.scrollTop = scrollTop;
-    });
+    // 保存到localStorage
+    localStorage.setItem('markdownContent', newValue);
+    
+    if (effectiveIsAutoSave && onSave) {
+      // 使用防抖处理自动保存
+      debouncedSave(newValue);
+    }
   };
+
+  // 添加防抖保存函数
+  const debouncedSave = useCallback(
+    debounce(async (newValue: string) => {
+      if (onSave) {
+        try {
+          await onSave(newValue);
+          setSavedContent(newValue);
+          setSaveStatus('saved');
+        } catch (err) {
+          console.error('保存失败:', err);
+        }
+      }
+    }, 1000),
+    [onSave]
+  );
 
   // 保持编辑器滚动位置
   useEffect(() => {
@@ -1808,14 +1847,14 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
         textarea.scrollTop = currentScrollTop;
       });
     }
-  }, [content]);
+  }, [value]);
 
   // 手动保存
   const handleSaveClick = async () => {
-    if (saveStatus === 'saving' || content === savedContent) {
+    if (saveStatus === 'saving' || value === savedContent) {
       return;
     }
-    await saveContent(content);
+    await saveContent(value);
   };
 
   // 通用的复制处理函数
@@ -1824,7 +1863,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
       let success = false;
       
       if (type === 'edit') {
-        success = await copyToClipboard(content);
+        success = await copyToClipboard(value);
       } else if (type === 'preview') {
         success = await handleCopyPreview();
       } else if (type === 'wechat') {
@@ -1935,7 +1974,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
     
     const textarea = editorRef.current;
     const newContent = textarea.value.substring(0, start) + text + textarea.value.substring(end);
-    setContent(newContent);
+    setValue(newContent);
     setSaveStatus(newContent !== savedContent ? 'changed' : 'saved');
     
     setTimeout(() => {
@@ -1960,8 +1999,8 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
   }, []);
 
   useEffect(() => {
-    onAutoSaveChange?.(isAutoSaveEnabled);
-  }, [isAutoSaveEnabled, onAutoSaveChange]);
+    onAutoSaveChange?.(effectiveIsAutoSave);
+  }, [effectiveIsAutoSave, onAutoSaveChange]);
 
   useEffect(() => {
     // 处理滚动同步
@@ -1969,6 +2008,13 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
     
     return () => {};
   }, [viewMode]);
+
+  // 添加格式化按钮的处理函数
+  const handleFormatClick = () => {
+    if (onFormat) {
+      onFormat();
+    }
+  };
 
   return (
     <div className="flex flex-col h-full w-full overflow-hidden bg-white">
@@ -2055,22 +2101,22 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
           <div className="flex items-center space-x-1 sm:space-x-3">
             <button
               className={`flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm font-semibold ${
-                isAutoSaveEnabled
+                effectiveIsAutoSave
                   ? 'bg-green-50 text-green-700 border border-green-200'
                   : 'bg-gray-50 text-gray-600 border border-gray-200'
               } transition-all duration-200`}
-              onClick={() => onAutoSaveChange?.(!isAutoSaveEnabled)}
+              onClick={() => onAutoSaveChange?.(!effectiveIsAutoSave)}
               title="自动保存"
             >
               <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={isAutoSaveEnabled ? 2.5 : 1.5} 
-                  d={isAutoSaveEnabled 
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={effectiveIsAutoSave ? 2.5 : 1.5} 
+                  d={effectiveIsAutoSave 
                     ? "M5 13l4 4L19 7" 
                     : "M17 16v2a2 2 0 01-2 2H5a2 2 0 01-2-2v-7a2 2 0 012-2h2m3-4H9a2 2 0 00-2 2v7a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-1m-1 4l-3 3m0 0l-3-3m3 3V3"} 
                 />
               </svg>
-              <span className="hidden sm:inline">{isAutoSaveEnabled ? '已开启自动' : '自动'}保存</span>
-              <span className="inline sm:hidden">{isAutoSaveEnabled ? '自动' : '手动'}</span>
+              <span className="hidden sm:inline">{effectiveIsAutoSave ? '已开启自动' : '自动'}保存</span>
+              <span className="inline sm:hidden">{effectiveIsAutoSave ? '自动' : '手动'}</span>
             </button>
             <button
               className={`px-2 sm:px-3 py-1.5 text-sm font-semibold rounded-md transition-all duration-200
@@ -2145,7 +2191,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
                   <textarea
                     ref={editorRef}
                     className="editor-textarea"
-                    value={content}
+                    value={value}
                     onChange={handleContentChange}
                     spellCheck={false}
                   />

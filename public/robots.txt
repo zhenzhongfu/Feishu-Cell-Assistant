@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://fsmd.pigu.app/sitemap.xml 
